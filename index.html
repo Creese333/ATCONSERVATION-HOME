@@ -32,14 +32,23 @@ h1 .at{color:var(--accent)}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 18px calc(env(safe-area-inset-bottom) + 22px);display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none}
 #story{display:flex;align-items:center;gap:16px;max-width:560px;width:100%}
 #bug{flex:none;width:clamp(130px,32vw,210px);margin:0;perspective:700px}
-#bug img{display:block;width:100%;height:auto;border-radius:12px;border:2px solid rgba(255,255,255,.85);transform:rotateX(14deg) rotateY(-14deg);transform-origin:50% 60%;
-  animation:float 5s ease-in-out infinite;box-shadow:0 22px 30px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.4)}
-@keyframes float{0%,100%{transform:rotateX(14deg) rotateY(-14deg) translateY(0)}50%{transform:rotateX(10deg) rotateY(-8deg) translateY(-6px)}}
+/* the 3D lanternfly: the whole insect tilted back and drifting; every few seconds the wings beat three times about their hinges */
+#slf3d{position:relative;width:100%;aspect-ratio:650/430;perspective:800px}
+#slf3d .rig{position:absolute;inset:0;transform-style:preserve-3d;animation:drift 10s ease-in-out infinite}
+#slf3d img{position:absolute;inset:0;width:100%;height:100%;display:block}
+#slf3d .wl{transform-origin:43.6% 50%;animation:beatL 4s ease-in-out infinite}
+#slf3d .wr{transform-origin:55.8% 50%;animation:beatR 4s ease-in-out infinite}
+#slf3d .b{transform:translateZ(2px)}
+#slf3d .shd{position:absolute;left:18%;right:18%;bottom:-6%;height:16%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),rgba(0,0,0,0));animation:shadow 10s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translateY(0) rotateX(48deg) rotateZ(-7deg)}25%{transform:translateY(-7%) rotateX(42deg) rotateZ(3deg)}50%{transform:translateY(-2%) rotateX(50deg) rotateZ(9deg)}75%{transform:translateY(-9%) rotateX(40deg) rotateZ(-2deg)}}
+@keyframes shadow{0%,100%{transform:scale(1);opacity:.9}25%{transform:scale(.86);opacity:.6}50%{transform:scale(.95);opacity:.8}75%{transform:scale(.82);opacity:.55}}
+@keyframes beatL{0%,52%{transform:rotateY(6deg)}59%{transform:rotateY(64deg)}66%{transform:rotateY(-4deg)}73%{transform:rotateY(58deg)}80%{transform:rotateY(-2deg)}87%{transform:rotateY(46deg)}94%,100%{transform:rotateY(6deg)}}
+@keyframes beatR{0%,52%{transform:rotateY(-6deg)}59%{transform:rotateY(-64deg)}66%{transform:rotateY(4deg)}73%{transform:rotateY(-58deg)}80%{transform:rotateY(2deg)}87%{transform:rotateY(-46deg)}94%,100%{transform:rotateY(-6deg)}}
 #bug svg[hidden]{display:none}
 #credit{margin-top:8px;font-size:10px;line-height:1.3;color:var(--muted);text-shadow:0 1px 4px rgba(0,0,0,.8)}
 #bug svg{width:100%;height:auto;display:block;transform:rotateX(28deg);transform-origin:50% 60%;animation:hover 4.5s ease-in-out infinite;filter:drop-shadow(0 18px 14px rgba(0,0,0,.55))}
-#bug .wl{transform-origin:128px 96px;animation:flapL 4.5s ease-in-out infinite}
-#bug .wr{transform-origin:132px 96px;animation:flapR 4.5s ease-in-out infinite}
+#slfdraw .wl{transform-origin:128px 96px;animation:flapL 4.5s ease-in-out infinite}
+#slfdraw .wr{transform-origin:132px 96px;animation:flapR 4.5s ease-in-out infinite}
 @keyframes hover{0%,100%{transform:rotateX(28deg) translateY(0)}50%{transform:rotateX(22deg) translateY(-6px)}}
 @keyframes flapL{0%,100%{transform:rotate(0)}50%{transform:rotate(-4deg)}}
 @keyframes flapR{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
@@ -53,7 +62,7 @@ h1 .at{color:var(--accent)}
 #act span{font-weight:600;font-size:15px}
 #act:hover,#act:focus-visible{background:#FFD84D;outline:3px solid #fff;outline-offset:2px}
 @media (max-width:420px){ #act span{display:none} }
-@media (prefers-reduced-motion:reduce){ #bug svg,#bug .wl,#bug .wr,#bug img{animation:none} }
+@media (prefers-reduced-motion:reduce){ #bug svg,#slfdraw .wl,#slfdraw .wr,#slf3d .w,#slf3d .rig,#slf3d .shd{animation:none} #slf3d .rig{transform:rotateX(40deg)} }
 </style>
 </head>
 <body>
@@ -63,9 +72,12 @@ h1 .at{color:var(--accent)}
 <main id="panel">
   <div id="story">
     <figure id="bug">
-      <!-- the photo: a copy in images/slf.jpg if there is one, otherwise the National Park Service's copy; if neither loads, the drawing below -->
-      <img id="slfimg" src="images/slf.jpg" alt="Spotted lanternfly with its wings open, showing the black spots and red hindwings" width="650" height="433">
-      <figcaption id="credit">Photo: Lawrence Barringer, Pennsylvania Department of Agriculture, Bugwood.org</figcaption>
+      <!-- the lanternfly in 3D: cut from the photo into a body and two wing pairs (images/slf-*.webp), the wings hinged at the thorax -->
+      <div id="slf3d" role="img" aria-label="A spotted lanternfly, wings open, flapping">
+        <div class="shd"></div>
+        <div class="rig"><img class="w wl" src="images/slf-wl.webp" alt=""><img class="w wr" src="images/slf-wr.webp" alt=""><img class="b" src="images/slf-body.webp" alt=""></div>
+      </div>
+      <figcaption id="credit">Adapted from a photo by Lawrence Barringer, Pennsylvania Department of Agriculture, Bugwood.org</figcaption>
       <!-- spotted lanternfly, wings open: grey forewings with black spots and a netted tip, red hindwings with black spots, a white band and black edges, yellow and black body -->
       <svg id="slfdraw" viewBox="0 0 260 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" hidden>
         <defs>
@@ -138,11 +150,10 @@ const SVC = 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/
 const BOX = [-77.85, 39.15, -77.45, 39.55], CENTER = [39.318, -77.735];
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const map = new ATMap('map', {minZoom:9, maxZoom:16, base:'img'});
-/* the lanternfly photo: this site's copy, then the National Park Service's, then the drawing */
-{ const img = document.getElementById('slfimg'), NPS = 'https://www.nps.gov/articles/images/SLF_Lawrence-Barringer_Bugwood_5524251.jpg?maxwidth=650&autorotate=false';
-  img.addEventListener('error', () => { if (img.src.indexOf('nps.gov') < 0){ img.src = NPS; return; }
-    img.remove(); document.getElementById('credit').remove(); document.getElementById('slfdraw').removeAttribute('hidden'); });
-  if (img.complete && !img.naturalWidth) img.dispatchEvent(new Event('error')); }   /* it may have failed before this ran */
+/* if the lanternfly's pictures cannot load, the drawing takes its place */
+{ const pics = [...document.querySelectorAll('#slf3d img')]; let gone = false;
+  const fall = () => { if (gone) return; gone = true; document.getElementById('slf3d').remove(); document.getElementById('credit').remove(); document.getElementById('slfdraw').removeAttribute('hidden'); };
+  pics.forEach(i => { i.addEventListener('error', fall); if (i.complete && !i.naturalWidth) fall(); }); }
 const $ = id => document.getElementById(id);
 map.ready(() => {
   map.setView(CENTER, 12.4);
