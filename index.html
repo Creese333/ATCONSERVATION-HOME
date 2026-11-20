@@ -192,7 +192,10 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
 const SRC = window.AT_SRC || 'https://grid.trailassessment.org/';
 const SVC = 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/';
 /* the section of trail shown: Harpers Ferry, where the trail crosses the Potomac between Loudoun Heights and South Mountain */
-const BOX = [-77.85, 39.15, -77.45, 39.55], CENTER = [39.318, -77.735];
+const BOX = [-77.85, 39.15, -77.45, 39.55];
+/* the opening view: Harpers Ferry from the southwest, the footbridge and the towpath toward Sandy Hook ahead, the Shenandoah
+   to the right (matched to Casey's phone screenshot, Nov 2026; MapLibre zoom) */
+const VIEW = {center:[-77.7328, 39.3231], zoom:14.1, pitch:57, bearing:63};
 /* with Reduce Motion on, the camera holds still and the years show the latest; zooming still sets the wings fluttering */
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
@@ -254,9 +257,8 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
 
 const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:16, base:'osm'});
 map.ready(() => {
-  map.setView(CENTER, 12.4);
   map.set3D(true, {animate:false});
-  map.ml.jumpTo({pitch:64, bearing:-28});
+  map.ml.jumpTo(VIEW);
   map.ml.on('zoom', () => window.slfBuzz && window.slfBuzz());   /* zooming sets the lanternfly fluttering */
   /* the trail: a soft glow under a white line */
   const trail = new G.Overlay(map, 'hometrail', 'trail', [
@@ -305,13 +307,14 @@ map.ready(() => {
     hooks.push(on => { clearTimeout(timer); if (on){ if (cur === years.length - 1) cur = 0; step(); } else show(cur, false); });
     if (playing){ cur = 0; step(); } else show(cur, false);
   }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail at Harpers Ferry'; });
-  /* the camera circles slowly, a degree a second, turned a little each frame. Touching, clicking or scrolling the map
-     pauses it for 9 s. (Not rotateTo and map.stop(): stopping an animation in a touch or wheel listener also cancels the
-     pinch or scroll the person is starting, so the map would never zoom.) */
-  let spin = false, idle = 0, lastT = 0;
+  /* the camera sways gently, 7 degrees either way over 50 s, around the direction it faces, so the chosen view stays.
+     Touching, clicking or scrolling the map pauses it for 9 s; it then sways around wherever the person left it.
+     (Turned a little each frame, not with rotateTo and map.stop(): stopping an animation in a touch or wheel listener
+     also cancels the pinch or scroll the person is starting, so the map would never zoom.) */
+  let spin = false, idle = 0, lastT = 0, ph = 0, base = VIEW.bearing;
   const turn = now => { requestAnimationFrame(turn); const dt = lastT ? Math.min(.1, (now - lastT) / 1000) : 0; lastT = now;
-    if (spin && playing && dt && !map.ml.isMoving()) map.ml.setBearing(map.ml.getBearing() + dt); };
-  const hold = () => { spin = false; clearTimeout(idle); idle = setTimeout(() => { spin = true; }, 9000); };
+    if (!spin || !playing || !dt || map.ml.isMoving()) return; ph += dt; map.ml.setBearing(base + 7 * Math.sin(2 * Math.PI * ph / 50)); };
+  const hold = () => { spin = false; clearTimeout(idle); idle = setTimeout(() => { base = map.ml.getBearing(); ph = 0; spin = true; }, 9000); };
   ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true, capture:true}));
   setTimeout(() => { spin = true; requestAnimationFrame(turn); }, 1200);
 });
