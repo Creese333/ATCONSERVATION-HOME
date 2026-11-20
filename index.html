@@ -19,7 +19,8 @@
      and a segmented timeline that fills year by year (each segment in that year's dot color). Everything rises in on load. -->
 <style>
 :root{--ink:#F5F5F7;--sub:rgba(235,235,245,.62);--faint:rgba(235,235,245,.38);--accent:#FF9F0A;
-  --glass:rgba(28,28,30,.58);--edge:rgba(255,255,255,.10);--ease:cubic-bezier(.22,.8,.24,1)}
+  --glass:rgba(28,28,30,.58);--edge:rgba(255,255,255,.10);--ease:cubic-bezier(.22,.8,.24,1);
+  --phen:#F0C419}   /* the yellow of ACT's phenology question (When does it flower here?) */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:#000;color:var(--ink);overflow:hidden;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Inter,system-ui,sans-serif;
@@ -27,18 +28,25 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);overflow:hidden;
 #map{position:fixed;inset:0}
 .maplibregl-ctrl-top-left{display:none}
 /* the map credits sit small at the top right, out of the card's way */
-.maplibregl-ctrl-bottom-right{top:calc(env(safe-area-inset-top) + 62px);bottom:auto;right:6px;max-width:60vw}
+.maplibregl-ctrl-bottom-right{top:calc(env(safe-area-inset-top) + 114px);bottom:auto;right:6px;max-width:50vw}
 .maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib{font-size:8px;line-height:1.3;background:transparent;color:var(--faint);margin:0;text-align:right;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .maplibregl-ctrl-attrib a{color:var(--sub)}
 /* the dark edges keep the words readable over the imagery */
 #shade{position:fixed;inset:0;pointer-events:none;background:
   linear-gradient(180deg,rgba(0,0,0,.62) 0,rgba(0,0,0,0) 20%,rgba(0,0,0,0) 50%,rgba(0,0,0,.55) 100%)}
-header{position:fixed;top:0;left:0;right:0;display:flex;align-items:flex-start;
+header{position:fixed;top:0;left:0;right:0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
   padding:calc(env(safe-area-inset-top) + 14px) 20px 0;pointer-events:none}
-h1{margin:0;font-size:clamp(24px,4.6vw,36px);font-weight:700;letter-spacing:-.035em;line-height:1}
-h1 .at{background:linear-gradient(160deg,#FFD60A,#FF9F0A 55%,#FF6B0A);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{margin:0;font-size:clamp(34px,8.6vw,54px);font-weight:700;letter-spacing:-.035em;line-height:1}
+h1 .at{color:var(--phen)}
 .glass{background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
   border:1px solid var(--edge);box-shadow:0 24px 60px rgba(0,0,0,.35)}
+/* the basemap switch: imagery or OpenStreetMap */
+#bases{pointer-events:auto;display:flex;padding:3px;border-radius:999px;flex:none;position:absolute;right:14px;top:calc(env(safe-area-inset-top) + 74px)}
+@media (min-width:700px){ #bases{position:static;margin-top:6px} }
+#bases button{border:0;background:none;color:var(--sub);font:inherit;font-size:11.5px;font-weight:600;letter-spacing:-.01em;
+  padding:6px 10px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
+#bases button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:#1D1D1F}
+#bases button:focus-visible{outline:2px solid #0A84FF;outline-offset:1px}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 12px calc(env(safe-area-inset-bottom) + 12px);
   display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
 /* the lanternfly sits centered under the title; drawn on a canvas (see the script) */
@@ -53,7 +61,7 @@ h1 .at{background:linear-gradient(160deg,#FFD60A,#FF9F0A 55%,#FF6B0A);-webkit-ba
 #card{pointer-events:auto;width:100%;max-width:290px;border-radius:18px;padding:13px 13px 10px}
 #top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 #year{font-size:22px;font-weight:700;letter-spacing:-.035em;line-height:1;font-variant-numeric:tabular-nums;
-  background:linear-gradient(180deg,#FFE08A 0%,#FFB347 45%,#F97316 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  color:var(--phen)}
 #count{font-size:10.5px;font-weight:500;color:var(--sub);text-align:right;font-variant-numeric:tabular-nums}
 #what{margin:3px 0 0;font-size:12px;line-height:1.35;font-weight:500;letter-spacing:-.01em;color:var(--ink)}
 /* the timeline: one segment a year, filled in that year's dot color; tap one to hold on that year */
@@ -67,7 +75,9 @@ h1 .at{background:linear-gradient(160deg,#FFD60A,#FF9F0A 55%,#FF6B0A);-webkit-ba
 #tl.ends button span{visibility:hidden}
 #tl.ends button:first-child span,#tl.ends button:last-child span,#tl.ends button.now span{visibility:visible}
 #tl button:focus-visible{outline:2px solid #0A84FF;outline-offset:2px;border-radius:4px}
-#act{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;height:34px;border-radius:999px;
+#go{pointer-events:auto;width:100%;max-width:290px;margin-bottom:8px}
+#go small{display:block;font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--sub);margin:0 0 4px 12px;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+#act{display:flex;align-items:center;justify-content:center;gap:10px;height:38px;box-shadow:0 8px 24px rgba(0,0,0,.3);border-radius:999px;
   background:var(--ink);color:#1D1D1F;font-weight:700;font-size:13px;letter-spacing:-.01em;text-decoration:none;
   transition:transform .25s var(--ease),background .25s}
 #act span{font-weight:500;color:#3A3A3C}
@@ -163,13 +173,16 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
       </svg>
   </figure>
   </div>
+  <div id="bases" class="glass rise" style="--d:.15s" role="group" aria-label="Basemap"><button type="button" data-b="img" aria-pressed="false">Imagery</button><button type="button" data-b="osm" aria-pressed="true">OpenStreetMap</button></div>
 </header>
 <main id="panel">
+  <div id="go" class="rise" style="--d:.25s"><small>Click</small>
+  <a id="act" href="https://act.atconservation.com/">ACT <span>Appalachian Conservation Tool</span><svg viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5l6 5.5-6 5.5"/></svg></a>
+  </div>
   <section id="card" class="glass rise" style="--d:.3s">
     <div id="top"><div id="year" aria-live="polite">&nbsp;</div><div id="count">&nbsp;</div></div>
     <p id="what">Spotted lanternfly along the Appalachian Trail at Harpers Ferry, year by year</p>
     <div id="tl" aria-label="Years"></div>
-    <a id="act" href="https://act.atconservation.com/">ACT <span>Appalachian Conservation Tool</span><svg viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5l6 5.5-6 5.5"/></svg></a>
   </section>
   <p id="credit" class="rise" style="--d:.6s">Adapted from a photo by Lawrence Barringer, Pennsylvania Department of Agriculture, Bugwood.org</p>
 </main>
@@ -241,7 +254,7 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
   requestAnimationFrame(frame);
 })();
 
-const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:16, base:'img'});
+const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:16, base:'osm'});
 map.ready(() => {
   map.setView(CENTER, 12.4);
   map.set3D(true, {animate:false});
@@ -253,6 +266,12 @@ map.ready(() => {
     {type:'line', layout:{'line-join':'round', 'line-cap':'round'}, paint:{'line-color':'#FFFFFF', 'line-width':2.6}}]);
   const q = new URLSearchParams({where:'1=1', geometry:BOX.join(','), geometryType:'esriGeometryEnvelope', inSR:4326, spatialRel:'esriSpatialRelIntersects',
     outFields:'OBJECTID', outSR:4326, f:'geojson', maxAllowableOffset:'0.00005', geometryPrecision:5});
+  /* the basemap switch; the trail is white over imagery and dark green over the light street map */
+  const TRAILC = {img:['#FFFFFF', .18], osm:['#14532D', .25]};
+  const setBase = k => { map.setBase(k); document.querySelectorAll('#bases button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.b === k)));
+    const [c, o] = TRAILC[k] || TRAILC.img; trail.ids.forEach((id, i) => { map.ml.setPaintProperty(id, 'line-color', c); if (!i) map.ml.setPaintProperty(id, 'line-opacity', o); }); };
+  document.querySelectorAll('#bases button').forEach(b => b.addEventListener('click', () => setBase(b.dataset.b)));
+  setBase('osm');
   fetch(SVC + 'ANST_Centerline/FeatureServer/0/query?' + q).then(r => r.ok ? r.json() : null).then(j => { if (j && j.features) trail.set(j); }).catch(() => {});
   /* the records: every year so far in its color, this year's larger and glowing */
   const RAMP = ['#7A1F12', '#C2410C', '#F97316', '#FFB347', '#FFE08A'];
