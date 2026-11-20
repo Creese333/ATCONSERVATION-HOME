@@ -31,7 +31,12 @@ h1{margin:0;font-size:clamp(30px,6vw,52px);font-weight:800;letter-spacing:-.01em
 h1 .at{color:var(--accent)}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 18px calc(env(safe-area-inset-bottom) + 22px);display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none}
 #story{display:flex;align-items:center;gap:16px;max-width:560px;width:100%}
-#bug{flex:none;width:clamp(110px,26vw,170px);perspective:600px}
+#bug{flex:none;width:clamp(130px,32vw,210px);margin:0;perspective:700px}
+#bug img{display:block;width:100%;height:auto;border-radius:12px;border:2px solid rgba(255,255,255,.85);transform:rotateX(14deg) rotateY(-14deg);transform-origin:50% 60%;
+  animation:float 5s ease-in-out infinite;box-shadow:0 22px 30px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.4)}
+@keyframes float{0%,100%{transform:rotateX(14deg) rotateY(-14deg) translateY(0)}50%{transform:rotateX(10deg) rotateY(-8deg) translateY(-6px)}}
+#bug svg[hidden]{display:none}
+#credit{margin-top:8px;font-size:10px;line-height:1.3;color:var(--muted);text-shadow:0 1px 4px rgba(0,0,0,.8)}
 #bug svg{width:100%;height:auto;display:block;transform:rotateX(28deg);transform-origin:50% 60%;animation:hover 4.5s ease-in-out infinite;filter:drop-shadow(0 18px 14px rgba(0,0,0,.55))}
 #bug .wl{transform-origin:128px 96px;animation:flapL 4.5s ease-in-out infinite}
 #bug .wr{transform-origin:132px 96px;animation:flapR 4.5s ease-in-out infinite}
@@ -48,7 +53,7 @@ h1 .at{color:var(--accent)}
 #act span{font-weight:600;font-size:15px}
 #act:hover,#act:focus-visible{background:#FFD84D;outline:3px solid #fff;outline-offset:2px}
 @media (max-width:420px){ #act span{display:none} }
-@media (prefers-reduced-motion:reduce){ #bug svg,#bug .wl,#bug .wr{animation:none} }
+@media (prefers-reduced-motion:reduce){ #bug svg,#bug .wl,#bug .wr,#bug img{animation:none} }
 </style>
 </head>
 <body>
@@ -57,9 +62,12 @@ h1 .at{color:var(--accent)}
 <header><h1><span class="at">@</span>Conservation</h1></header>
 <main id="panel">
   <div id="story">
-    <div id="bug" aria-hidden="true">
+    <figure id="bug">
+      <!-- the photo: a copy in images/slf.jpg if there is one, otherwise the National Park Service's copy; if neither loads, the drawing below -->
+      <img id="slfimg" src="images/slf.jpg" alt="Spotted lanternfly with its wings open, showing the black spots and red hindwings" width="650" height="433">
+      <figcaption id="credit">Photo: Lawrence Barringer, Pennsylvania Department of Agriculture, Bugwood.org</figcaption>
       <!-- spotted lanternfly, wings open: grey forewings with black spots and a netted tip, red hindwings with black spots, a white band and black edges, yellow and black body -->
-      <svg viewBox="0 0 260 210" xmlns="http://www.w3.org/2000/svg">
+      <svg id="slfdraw" viewBox="0 0 260 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" hidden>
         <defs>
           <radialGradient id="hw" cx="35%" cy="35%" r="80%"><stop offset="0" stop-color="#FF5A5F"/><stop offset=".55" stop-color="#D7263D"/><stop offset="1" stop-color="#7E0F1E"/></radialGradient>
           <linearGradient id="fw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E6DCCB"/><stop offset=".55" stop-color="#C2B49C"/><stop offset="1" stop-color="#8D7F6A"/></linearGradient>
@@ -109,7 +117,7 @@ h1 .at{color:var(--accent)}
         <path d="M125 68 C 120 60, 116 56, 110 54 M135 68 C 140 60, 144 56, 150 54" stroke="#2A2A2A" stroke-width="2" fill="none" stroke-linecap="round"/>
         <ellipse cx="126" cy="88" rx="4" ry="6" fill="#fff" opacity=".18"/>
       </svg>
-    </div>
+    </figure>
     <div id="words">
       <div id="year" aria-live="polite">&nbsp;</div>
       <div id="what">Spotted lanternfly along the Appalachian Trail at Harpers Ferry, year by year</div>
@@ -130,6 +138,11 @@ const SVC = 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/
 const BOX = [-77.85, 39.15, -77.45, 39.55], CENTER = [39.318, -77.735];
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const map = new ATMap('map', {minZoom:9, maxZoom:16, base:'img'});
+/* the lanternfly photo: this site's copy, then the National Park Service's, then the drawing */
+{ const img = document.getElementById('slfimg'), NPS = 'https://www.nps.gov/articles/images/SLF_Lawrence-Barringer_Bugwood_5524251.jpg?maxwidth=650&autorotate=false';
+  img.addEventListener('error', () => { if (img.src.indexOf('nps.gov') < 0){ img.src = NPS; return; }
+    img.remove(); document.getElementById('credit').remove(); document.getElementById('slfdraw').removeAttribute('hidden'); });
+  if (img.complete && !img.naturalWidth) img.dispatchEvent(new Event('error')); }   /* it may have failed before this ran */
 const $ = id => document.getElementById(id);
 map.ready(() => {
   map.setView(CENTER, 12.4);
