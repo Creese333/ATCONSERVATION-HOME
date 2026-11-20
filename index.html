@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1B2C">
+<title>@Conservation</title>
+<meta name="description" content="Conservation tools for the Appalachian Trail corridor.">
+<link rel="icon" href="images/icon-192.png">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://grid.trailassessment.org" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+<!-- @Conservation home page. A 3D model of the Appalachian Trail at Harpers Ferry, the camera slowly circling, with the
+     forest pest records for spotted lanternfly (the same records ACT animates under "Where are forest pests turning up?")
+     appearing year by year. The map is made with atmap.js (terrain, imagery, the tile queue), a copy of ACT's own
+     (Creese333/ATCONSERVATION); the records are read from the A.T. Resource Grid site, the trail from the NPS centerline
+     service. The button opens ACT. -->
+<style>
+:root{--ink:#EEF3F8;--muted:#A8B8CA;--night:#0E1B2C;--accent:#FFB347}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--night);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+#map{position:fixed;inset:0}
+.maplibregl-ctrl-top-left{display:none}
+.maplibregl-ctrl-bottom-right{opacity:.75}
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib{font-size:10px;background:rgba(14,27,44,.6);color:var(--muted);margin:0}
+.maplibregl-ctrl-attrib a{color:var(--ink)}
+/* the dark edges keep the words readable over the imagery */
+#shade{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(14,27,44,.82) 0,rgba(14,27,44,0) 22%,rgba(14,27,44,0) 55%,rgba(14,27,44,.9) 100%)}
+header{position:fixed;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 18px) 22px 0;pointer-events:none}
+h1{margin:0;font-size:clamp(30px,6vw,52px);font-weight:800;letter-spacing:-.01em;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+h1 .at{color:var(--accent)}
+#panel{position:fixed;left:0;right:0;bottom:0;padding:0 18px calc(env(safe-area-inset-bottom) + 22px);display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none}
+#story{display:flex;align-items:center;gap:16px;max-width:560px;width:100%}
+#bug{flex:none;width:clamp(110px,26vw,170px);perspective:600px}
+#bug svg{width:100%;height:auto;display:block;transform:rotateX(28deg);transform-origin:50% 60%;animation:hover 4.5s ease-in-out infinite;filter:drop-shadow(0 18px 14px rgba(0,0,0,.55))}
+#bug .wl{transform-origin:128px 96px;animation:flapL 4.5s ease-in-out infinite}
+#bug .wr{transform-origin:132px 96px;animation:flapR 4.5s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:rotateX(28deg) translateY(0)}50%{transform:rotateX(22deg) translateY(-6px)}}
+@keyframes flapL{0%,100%{transform:rotate(0)}50%{transform:rotate(-4deg)}}
+@keyframes flapR{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
+#words{min-width:0}
+#year{font-size:clamp(40px,10vw,64px);font-weight:800;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+#what{margin-top:6px;font-size:clamp(14px,3.6vw,16px);line-height:1.35;color:var(--ink);text-shadow:0 1px 6px rgba(0,0,0,.7)}
+#count{margin-top:4px;font-size:13px;color:var(--muted)}
+#key{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)}
+#key i{display:block;width:110px;height:8px;border-radius:4px;background:linear-gradient(90deg,#7A1F12,#C2410C,#F97316,#FFB347,#FFE08A)}
+#act{pointer-events:auto;display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:999px;background:#F0C419;color:#14294A;font-weight:800;font-size:18px;text-decoration:none;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+#act span{font-weight:600;font-size:15px}
+#act:hover,#act:focus-visible{background:#FFD84D;outline:3px solid #fff;outline-offset:2px}
+@media (max-width:420px){ #act span{display:none} }
+@media (prefers-reduced-motion:reduce){ #bug svg,#bug .wl,#bug .wr{animation:none} }
+</style>
+</head>
+<body>
+<div id="map" aria-hidden="true"></div>
+<div id="shade"></div>
+<header><h1><span class="at">@</span>Conservation</h1></header>
+<main id="panel">
+  <div id="story">
+    <div id="bug" aria-hidden="true">
+      <!-- spotted lanternfly, wings open: grey forewings with black spots and a netted tip, red hindwings with black spots, a white band and black edges, yellow and black body -->
+      <svg viewBox="0 0 260 210" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="hw" cx="35%" cy="35%" r="80%"><stop offset="0" stop-color="#FF5A5F"/><stop offset=".55" stop-color="#D7263D"/><stop offset="1" stop-color="#7E0F1E"/></radialGradient>
+          <linearGradient id="fw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E6DCCB"/><stop offset=".55" stop-color="#C2B49C"/><stop offset="1" stop-color="#8D7F6A"/></linearGradient>
+          <linearGradient id="ab" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B98F12"/><stop offset=".5" stop-color="#FFD43B"/><stop offset="1" stop-color="#B98F12"/></linearGradient>
+          <radialGradient id="shine" cx="40%" cy="30%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+          <radialGradient id="hd" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#4A4A4A"/><stop offset="1" stop-color="#0B0B0B"/></radialGradient>
+          <pattern id="net" width="7" height="6" patternUnits="userSpaceOnUse"><path d="M0 0h7M0 3h7M3.5 0v3M0 3v3M7 3v3" stroke="#4A3F33" stroke-width=".9" fill="none"/></pattern>
+          <clipPath id="tipL"><path d="M128 92 C 96 70, 40 46, 14 64 C 4 72, 10 92, 30 102 C 62 116, 104 112, 128 104 Z"/></clipPath>
+          <clipPath id="tipR"><path d="M132 92 C 164 70, 220 46, 246 64 C 256 72, 250 92, 230 102 C 198 116, 156 112, 132 104 Z"/></clipPath>
+        </defs>
+        <ellipse cx="130" cy="196" rx="70" ry="8" fill="#000" opacity=".25"/>
+        <!-- hindwings -->
+        <g class="wl">
+          <path d="M126 100 C 98 104, 52 116, 40 140 C 32 158, 48 176, 74 172 C 100 168, 120 140, 128 112 Z" fill="url(#hw)"/>
+          <path d="M60 150 C 54 162, 60 172, 74 172 C 92 169, 104 156, 112 146 C 96 146, 74 146, 60 150 Z" fill="#141414"/>
+          <path d="M66 145 C 80 141, 98 141, 113 143" stroke="#F4F1EA" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <circle cx="104" cy="114" r="4.5" fill="#141414"/><circle cx="90" cy="122" r="4" fill="#141414"/><circle cx="110" cy="126" r="3.6" fill="#141414"/><circle cx="76" cy="128" r="3.4" fill="#141414"/>
+          <path d="M126 100 C 98 104, 52 116, 40 140 C 32 158, 48 176, 74 172 C 100 168, 120 140, 128 112 Z" fill="url(#shine)"/>
+        </g>
+        <g class="wr">
+          <path d="M134 100 C 162 104, 208 116, 220 140 C 228 158, 212 176, 186 172 C 160 168, 140 140, 132 112 Z" fill="url(#hw)"/>
+          <path d="M200 150 C 206 162, 200 172, 186 172 C 168 169, 156 156, 148 146 C 164 146, 186 146, 200 150 Z" fill="#141414"/>
+          <path d="M194 145 C 180 141, 162 141, 147 143" stroke="#F4F1EA" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <circle cx="156" cy="114" r="4.5" fill="#141414"/><circle cx="170" cy="122" r="4" fill="#141414"/><circle cx="150" cy="126" r="3.6" fill="#141414"/><circle cx="184" cy="128" r="3.4" fill="#141414"/>
+          <path d="M134 100 C 162 104, 208 116, 220 140 C 228 158, 212 176, 186 172 C 160 168, 140 140, 132 112 Z" fill="url(#shine)"/>
+        </g>
+        <!-- forewings -->
+        <g class="wl">
+          <path d="M128 92 C 96 70, 40 46, 14 64 C 4 72, 10 92, 30 102 C 62 116, 104 112, 128 104 Z" fill="url(#fw)" stroke="#6E6252" stroke-width="1"/>
+          <g clip-path="url(#tipL)"><rect x="0" y="40" width="44" height="80" fill="url(#net)" opacity=".9"/></g>
+          <g fill="#151515"><circle cx="110" cy="92" r="4.2"/><circle cx="96" cy="84" r="3.8"/><circle cx="98" cy="100" r="3.6"/><circle cx="82" cy="78" r="3.4"/><circle cx="80" cy="96" r="3.8"/><circle cx="66" cy="86" r="3.2"/><circle cx="64" cy="100" r="3"/><circle cx="52" cy="78" r="2.8"/></g>
+          <path d="M128 92 C 96 70, 40 46, 14 64 C 4 72, 10 92, 30 102 C 62 116, 104 112, 128 104 Z" fill="url(#shine)"/>
+        </g>
+        <g class="wr">
+          <path d="M132 92 C 164 70, 220 46, 246 64 C 256 72, 250 92, 230 102 C 198 116, 156 112, 132 104 Z" fill="url(#fw)" stroke="#6E6252" stroke-width="1"/>
+          <g clip-path="url(#tipR)"><rect x="216" y="40" width="44" height="80" fill="url(#net)" opacity=".9"/></g>
+          <g fill="#151515"><circle cx="150" cy="92" r="4.2"/><circle cx="164" cy="84" r="3.8"/><circle cx="162" cy="100" r="3.6"/><circle cx="178" cy="78" r="3.4"/><circle cx="180" cy="96" r="3.8"/><circle cx="194" cy="86" r="3.2"/><circle cx="196" cy="100" r="3"/><circle cx="208" cy="78" r="2.8"/></g>
+          <path d="M132 92 C 164 70, 220 46, 246 64 C 256 72, 250 92, 230 102 C 198 116, 156 112, 132 104 Z" fill="url(#shine)"/>
+        </g>
+        <!-- body -->
+        <ellipse cx="130" cy="132" rx="11" ry="34" fill="url(#ab)"/>
+        <g stroke="#1A1A1A" stroke-width="3.2" fill="none" stroke-linecap="round"><path d="M120 116 h20"/><path d="M119 127 h22"/><path d="M119 138 h22"/><path d="M120 149 h20"/><path d="M123 159 h14"/></g>
+        <ellipse cx="130" cy="132" rx="11" ry="34" fill="url(#shine)"/>
+        <ellipse cx="130" cy="94" rx="13" ry="16" fill="url(#hd)"/>
+        <ellipse cx="130" cy="74" rx="9" ry="8" fill="url(#hd)"/>
+        <circle cx="125" cy="71" r="2" fill="#C23B22"/><circle cx="135" cy="71" r="2" fill="#C23B22"/>
+        <path d="M125 68 C 120 60, 116 56, 110 54 M135 68 C 140 60, 144 56, 150 54" stroke="#2A2A2A" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="126" cy="88" rx="4" ry="6" fill="#fff" opacity=".18"/>
+      </svg>
+    </div>
+    <div id="words">
+      <div id="year" aria-live="polite">&nbsp;</div>
+      <div id="what">Spotted lanternfly along the Appalachian Trail at Harpers Ferry, year by year</div>
+      <div id="count">&nbsp;</div>
+      <div id="key" aria-hidden="true"><span id="k0"></span><i></i><span id="k1"></span></div>
+    </div>
+  </div>
+  <a id="act" href="https://act.atconservation.com/">ACT <span>Appalachian Conservation Tool</span> &rarr;</a>
+</main>
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="atmap.js"></script>
+<script>
+(function(){
+'use strict';
+const SRC = window.AT_SRC || 'https://grid.trailassessment.org/';
+const SVC = 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/';
+/* the section of trail shown: Harpers Ferry, where the trail crosses the Potomac between Loudoun Heights and South Mountain */
+const BOX = [-77.85, 39.15, -77.45, 39.55], CENTER = [39.318, -77.735];
+const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const map = new ATMap('map', {minZoom:9, maxZoom:16, base:'img'});
+const $ = id => document.getElementById(id);
+map.ready(() => {
+  map.setView(CENTER, 12.4);
+  map.set3D(true, {animate:false});
+  map.ml.jumpTo({pitch:64, bearing:-28});
+  /* the trail: a soft glow under a white line */
+  const trail = new G.Overlay(map, 'hometrail', 'trail', [
+    {type:'line', layout:{'line-join':'round', 'line-cap':'round'}, paint:{'line-color':'#FFFFFF', 'line-width':9, 'line-opacity':.18, 'line-blur':4}},
+    {type:'line', layout:{'line-join':'round', 'line-cap':'round'}, paint:{'line-color':'#FFFFFF', 'line-width':2.6}}]);
+  const q = new URLSearchParams({where:'1=1', geometry:BOX.join(','), geometryType:'esriGeometryEnvelope', inSR:4326, spatialRel:'esriSpatialRelIntersects',
+    outFields:'OBJECTID', outSR:4326, f:'geojson', maxAllowableOffset:'0.00005', geometryPrecision:5});
+  fetch(SVC + 'ANST_Centerline/FeatureServer/0/query?' + q).then(r => r.ok ? r.json() : null).then(j => { if (j && j.features) trail.set(j); }).catch(() => {});
+  /* the records: every year so far in its color, this year's larger and glowing */
+  const RAMP = ['#7A1F12', '#C2410C', '#F97316', '#FFB347', '#FFE08A'];
+  const recs = new G.Overlay(map, 'slf', 'feat', [
+    {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 2, 14, 5], 'circle-color':['get', 'c'], 'circle-opacity':.9, 'circle-stroke-color':'#1A0D06', 'circle-stroke-width':.6, 'circle-pitch-alignment':'map'}},
+    {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 6, 14, 14], 'circle-color':'#FFE08A', 'circle-opacity':.35, 'circle-blur':.9, 'circle-pitch-alignment':'map'}}]);
+  fetch(SRC + 'data/phen/lycorma-delicatula.json').then(r => r.json()).then(d => {
+    /* each record: [day of year, year, ..., lat, lon, ...] */
+    const pts = (d.pts || []).filter(p => p[4] >= BOX[0] && p[4] <= BOX[2] && p[3] >= BOX[1] && p[3] <= BOX[3]);
+    if (!pts.length) return;
+    const years = [...new Set(pts.map(p => p[1]))].sort((a, b) => a - b), y0 = years[0], y1 = years[years.length - 1];
+    const col = y => RAMP[Math.round((y - y0) / Math.max(1, y1 - y0) * (RAMP.length - 1))];
+    recs.set({type:'FeatureCollection', features:pts.map(p => ({type:'Feature', properties:{y:p[1], c:col(p[1])}, geometry:{type:'Point', coordinates:[p[4], p[3]]}}))});
+    $('k0').textContent = y0; $('k1').textContent = y1;
+    const show = y => { map.ml.setFilter(recs.ids[0], ['<=', ['get', 'y'], y]); map.ml.setFilter(recs.ids[1], ['==', ['get', 'y'], y]);
+      const n = pts.filter(p => p[1] <= y).length; $('year').textContent = y;
+      $('count').textContent = n.toLocaleString() + ' record' + (n === 1 ? '' : 's') + ' since ' + y0; };
+    if (STILL){ show(y1); return; }
+    let i = 0; const step = () => { show(years[i]); const last = i === years.length - 1; i = last ? 0 : i + 1; setTimeout(step, last ? 4500 : 1700); };
+    step();
+  }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail at Harpers Ferry'; });
+  /* the camera circles slowly; touching the map stops it for a while */
+  if (STILL) return;
+  let spin = false, idle = 0;
+  const orbit = () => { spin = true; map.ml.rotateTo(map.ml.getBearing() + 90, {duration:90000, easing:t => t}); };   /* a quarter turn in 90 s */
+  map.ml.on('moveend', () => { if (spin) orbit(); });   /* each quarter turn starts the next */
+  const hold = () => { spin = false; map.ml.stop(); clearTimeout(idle); idle = setTimeout(orbit, 9000); };
+  ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true}));
+  setTimeout(orbit, 1200);
+});
+})();
+</script>
+</body>
+</html>
