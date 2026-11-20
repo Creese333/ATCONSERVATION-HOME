@@ -88,9 +88,24 @@ h1 .at{color:var(--phen)}
 #credit{margin:6px 0 0 4px;font-size:8px;line-height:1.35;color:var(--faint);text-align:left;max-width:290px}
 #act{gap:6px} #act span{font-size:12px}
 @media (max-width:340px){ #act span{display:none} }
+/* computers: the ACT link at the top left; the lanternfly centered over a larger data card at the bottom left, both
+   growing with the screen (the script moves the lanternfly and the link to these places) */
 @media (min-width:900px){
-  #panel{padding-left:40px;padding-bottom:calc(env(safe-area-inset-bottom) + 34px)}
-  header{padding:20px 40px 0}
+  header{padding:22px 40px 0}
+  #go{max-width:clamp(330px,22vw,440px);margin:0;pointer-events:auto}
+  #act{height:clamp(44px,2.9vw,58px);font-size:clamp(16px,1.05vw,21px);gap:10px}
+  #act span{font-size:clamp(15px,.98vw,19px)}
+  #act svg{width:9px;height:14px}
+  #panel{left:40px;right:auto;width:clamp(400px,27vw,560px);align-items:center;padding:0 0 calc(env(safe-area-inset-bottom) + 34px)}
+  #bug{width:clamp(200px,13vw,280px);margin:0 0 -6px}
+  #card{max-width:none;border-radius:26px;padding:clamp(20px,1.4vw,28px) clamp(20px,1.5vw,30px) clamp(16px,1.1vw,22px)}
+  #year{font-size:clamp(40px,2.7vw,58px)}
+  #count{font-size:clamp(13px,.85vw,17px)}
+  #what{font-size:clamp(15px,1vw,20px);margin-top:8px}
+  #tl{margin-top:16px;gap:5px}
+  #tl button{font-size:clamp(10.5px,.7vw,14px);gap:6px}
+  #tl button b{height:4px}
+  #credit{font-size:clamp(9px,.6vw,12px);max-width:none;margin:10px 0 0;text-align:center}
   .maplibregl-ctrl-bottom-right{top:auto;bottom:6px}
 }
 /* everything rises in, one after another */
@@ -256,7 +271,13 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
   requestAnimationFrame(frame);
 })();
 
-const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:16, base:'osm'});
+/* on a computer the lanternfly sits centered over the data card and the ACT link at the top left; on a phone the
+   lanternfly is at the top left and the link above the card */
+{ const DESK = matchMedia('(min-width:900px)'), bug = $('bug'), go = $('go'), card = $('card'), panel = $('panel'), brand = $('brand'), head = document.querySelector('header');
+  const lay = () => { if (DESK.matches){ panel.insertBefore(bug, card); head.insertBefore(go, head.firstChild); }
+    else { brand.appendChild(bug); panel.insertBefore(go, card); } };
+  lay(); DESK.addEventListener ? DESK.addEventListener('change', lay) : DESK.addListener(lay); }
+const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:18, base:'osm'});   /* 18: down to single buildings and the footbridge */
 map.ready(() => {
   map.set3D(true, {animate:false});
   map.ml.jumpTo(VIEW);
