@@ -64,6 +64,13 @@ h1 .at{color:var(--accent)}
 @media (max-width:420px){ #act span{display:none} }
 @media (prefers-reduced-motion:reduce){ #bug svg,#slfdraw .wl,#slfdraw .wr,#slf3d .w,#slf3d .rig,#slf3d .shd{animation:none} #slf3d .rig{transform:rotateX(40deg)} }
 </style>
+<script>
+/* if a lanternfly picture really fails to load (an error event, nothing else), the drawing takes its place */
+function slfFail(){ if (window.slfGone) return; window.slfGone = true;
+  const go = () => { const a = document.getElementById('slf3d'), c = document.getElementById('credit'), d = document.getElementById('slfdraw');
+    if (a) a.remove(); if (c) c.remove(); if (d) d.removeAttribute('hidden'); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); }
+</script>
 </head>
 <body>
 <div id="map" aria-hidden="true"></div>
@@ -75,7 +82,7 @@ h1 .at{color:var(--accent)}
       <!-- the lanternfly in 3D: cut from the photo into a body and two wing pairs (images/slf-*.webp), the wings hinged at the thorax -->
       <div id="slf3d" role="img" aria-label="A spotted lanternfly, wings open, flapping">
         <div class="shd"></div>
-        <div class="rig"><img class="w wl" src="images/slf-wl.webp" alt=""><img class="w wr" src="images/slf-wr.webp" alt=""><img class="b" src="images/slf-body.webp" alt=""></div>
+        <div class="rig"><img class="w wl" src="images/slf-wl.webp" alt="" onerror="slfFail()"><img class="w wr" src="images/slf-wr.webp" alt="" onerror="slfFail()"><img class="b" src="images/slf-body.webp" alt="" onerror="slfFail()"></div>
       </div>
       <figcaption id="credit">Adapted from a photo by Lawrence Barringer, Pennsylvania Department of Agriculture, Bugwood.org</figcaption>
       <!-- spotted lanternfly, wings open: grey forewings with black spots and a netted tip, red hindwings with black spots, a white band and black edges, yellow and black body -->
@@ -150,10 +157,7 @@ const SVC = 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/
 const BOX = [-77.85, 39.15, -77.45, 39.55], CENTER = [39.318, -77.735];
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const map = new ATMap('map', {minZoom:9, maxZoom:16, base:'img'});
-/* if the lanternfly's pictures cannot load, the drawing takes its place */
-{ const pics = [...document.querySelectorAll('#slf3d img')]; let gone = false;
-  const fall = () => { if (gone) return; gone = true; document.getElementById('slf3d').remove(); document.getElementById('credit').remove(); document.getElementById('slfdraw').removeAttribute('hidden'); };
-  pics.forEach(i => { i.addEventListener('error', fall); if (i.complete && !i.naturalWidth) fall(); }); }
+
 const $ = id => document.getElementById(id);
 map.ready(() => {
   map.setView(CENTER, 12.4);
