@@ -195,7 +195,7 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
   </div>
   <section id="card" class="glass rise" style="--d:.3s">
     <div id="top"><div id="year" aria-live="polite">&nbsp;</div><div id="count">&nbsp;</div></div>
-    <p id="what">Spotted lanternfly along the Appalachian Trail at Harpers Ferry, year by year</p>
+    <p id="what">Spotted lanternfly along the Appalachian Trail in Harpers Ferry, WV, year by year</p>
     <div id="tl" aria-label="Years"></div>
   </section>
   <p id="credit" class="rise" style="--d:.6s">Adapted from a photo by Lawrence Barringer, Pennsylvania Department of Agriculture, Bugwood.org</p>
@@ -332,7 +332,7 @@ map.ready(() => {
       clearTimeout(resume); if (!STILL) resume = setTimeout(() => setPlay(true), 8000); }));
     hooks.push(on => { clearTimeout(timer); if (on){ if (cur === years.length - 1) cur = 0; step(); } else show(cur, false); });
     if (playing){ cur = 0; step(); } else show(cur, false);
-  }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail at Harpers Ferry'; });
+  }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail in Harpers Ferry, WV'; });
   /* the camera sways gently, 7 degrees either way over 50 s, around the direction it faces, so the chosen view stays.
      Touching, clicking or scrolling the map pauses it for 9 s; it then sways around wherever the person left it.
      (Turned a little each frame, not with rotateTo and map.stop(): stopping an animation in a touch or wheel listener
