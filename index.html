@@ -33,7 +33,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);overflow:hidden;
 /* the dark edges keep the words readable over the imagery */
 #shade{position:fixed;inset:0;pointer-events:none;background:
   linear-gradient(180deg,rgba(0,0,0,.62) 0,rgba(0,0,0,0) 20%,rgba(0,0,0,0) 50%,rgba(0,0,0,.55) 100%)}
-header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+header{position:fixed;top:0;left:0;right:0;display:flex;align-items:flex-start;
   padding:calc(env(safe-area-inset-top) + 14px) 20px 0;pointer-events:none}
 h1{margin:0;font-size:clamp(24px,4.6vw,36px);font-weight:700;letter-spacing:-.035em;line-height:1}
 h1 .at{background:linear-gradient(160deg,#FFD60A,#FF9F0A 55%,#FF6B0A);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -41,8 +41,9 @@ h1 .at{background:linear-gradient(160deg,#FFD60A,#FF9F0A 55%,#FF6B0A);-webkit-ba
   border:1px solid var(--edge);box-shadow:0 24px 60px rgba(0,0,0,.35)}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 12px calc(env(safe-area-inset-bottom) + 12px);
   display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
-/* the lanternfly floats over the top edge of the card; drawn on a canvas (see the script) */
-#bug{width:clamp(84px,24vw,112px);margin:0 0 -12px 4px;position:relative;z-index:2}
+/* the lanternfly sits centered under the title; drawn on a canvas (see the script) */
+#brand{display:inline-flex;flex-direction:column;align-items:center}
+#bug{width:clamp(110px,31vw,150px);margin:4px 0 0;position:relative}
 #slf3d{position:relative;width:100%;aspect-ratio:650/500}
 #slf3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #slf3d img{display:none}
@@ -99,10 +100,9 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
 <div id="map" aria-hidden="true"></div>
 <div id="shade"></div>
 <header>
+  <div id="brand">
   <h1 class="rise"><span class="at">@</span>Conservation</h1>
-</header>
-<main id="panel">
-  <figure id="bug" class="rise" style="--d:.45s">
+  <figure id="bug" class="rise" style="--d:.3s">
     <!-- the lanternfly in 3D: cut from the photo into a body and two wing pairs (images/slf-*.webp), the wings hinged at
          the thorax. Drawn on the canvas each frame with the 3D worked out in the script (no CSS 3D, which Safari draws
          differently); it sits still, and flutters (and lifts a little) only while the map is zooming. -->
@@ -162,6 +162,9 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
         <ellipse cx="126" cy="88" rx="4" ry="6" fill="#fff" opacity=".18"/>
       </svg>
   </figure>
+  </div>
+</header>
+<main id="panel">
   <section id="card" class="glass rise" style="--d:.3s">
     <div id="top"><div id="year" aria-live="polite">&nbsp;</div><div id="count">&nbsp;</div></div>
     <p id="what">Spotted lanternfly along the Appalachian Trail at Harpers Ferry, year by year</p>
@@ -198,16 +201,16 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
   /* the flutter: energy e rises fast while the map zooms and dies away about a third of a second after it stops;
      the wings beat 9 times a second, their swing growing with e; with e at 0 the insect rests and nothing is redrawn */
   const ready = () => [WL, WR, BD].every(i => i.complete && i.naturalWidth);
-  let t = 0, last = 0, dpr = 0, e = 0, kick = -1e9, drawn = false;
-  window.slfBuzz = () => { kick = performance.now(); };
+  let t = 0, last = 0, dpr = 0, e = 0, kick = -1e9, drawn = false, pend = false;
+  window.slfBuzz = () => { kick = performance.now(); pend = true; };   /* pend: the next frame flutters even if it comes late */
   const size = () => { const r = window.devicePixelRatio || 1, w = Math.round(cv.clientWidth * r), h = Math.round(cv.clientHeight * r);
     if (w && (cv.width !== w || cv.height !== h)){ cv.width = w; cv.height = h; drawn = false; } dpr = cv.width / CW; };
   const frame = now => {
     requestAnimationFrame(frame);
     if (!ready()) return;
     const dt = last ? Math.min(.1, (now - last) / 1000) : 0; last = now;
-    const want = now - kick < 250 ? 1 : 0, e0 = e;
-    e += (want - e) * (1 - Math.exp(-dt / (want ? .06 : .3))); if (!want && e < .004) e = 0;
+    const want = pend || performance.now() - kick < 250 ? 1 : 0, e0 = e; pend = false;
+    e += (want - e) * (1 - Math.exp(-Math.max(dt, .016) / (want ? .06 : .3))); if (!want && e < .004) e = 0;
     size();
     if (drawn && e === 0 && e0 === 0) return;
     drawn = true; t += dt;
@@ -238,7 +241,7 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
   requestAnimationFrame(frame);
 })();
 
-const map = new ATMap('map', {minZoom:9, maxZoom:16, base:'img'});
+const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:16, base:'img'});
 map.ready(() => {
   map.setView(CENTER, 12.4);
   map.set3D(true, {animate:false});
@@ -285,15 +288,15 @@ map.ready(() => {
     hooks.push(on => { clearTimeout(timer); if (on){ if (cur === years.length - 1) cur = 0; step(); } else show(cur, false); });
     if (playing){ cur = 0; step(); } else show(cur, false);
   }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail at Harpers Ferry'; });
-  /* the camera circles slowly; touching the map stops it for a while */
-  let spin = false, idle = 0;
-  const orbit = () => { if (!playing) return; spin = true; map.ml.rotateTo(map.ml.getBearing() + 90, {duration:90000, easing:t => t}); };   /* a quarter turn in 90 s */
-  map.ml.on('moveend', () => { if (spin && playing) orbit(); });   /* each quarter turn starts the next */
-  const halt = () => { spin = false; map.ml.stop(); clearTimeout(idle); };
-  const hold = () => { halt(); idle = setTimeout(orbit, 9000); };
-  ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true}));
-  hooks.push(on => { if (on) orbit(); else halt(); });
-  setTimeout(orbit, 1200);
+  /* the camera circles slowly, a degree a second, turned a little each frame. Touching, clicking or scrolling the map
+     pauses it for 9 s. (Not rotateTo and map.stop(): stopping an animation in a touch or wheel listener also cancels the
+     pinch or scroll the person is starting, so the map would never zoom.) */
+  let spin = false, idle = 0, lastT = 0;
+  const turn = now => { requestAnimationFrame(turn); const dt = lastT ? Math.min(.1, (now - lastT) / 1000) : 0; lastT = now;
+    if (spin && playing && dt && !map.ml.isMoving()) map.ml.setBearing(map.ml.getBearing() + dt); };
+  const hold = () => { spin = false; clearTimeout(idle); idle = setTimeout(() => { spin = true; }, 9000); };
+  ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true, capture:true}));
+  setTimeout(() => { spin = true; requestAnimationFrame(turn); }, 1200);
 });
 })();
 </script>
