@@ -185,7 +185,7 @@ class ATMap {
     this.ml = new ml.Map({container:this._el, style:{version:8, sources, layers},
       minZoom:(o.minZoom != null ? o.minZoom : 4) - ZO, maxZoom:(o.maxZoom != null ? o.maxZoom : 18) - ZO,
       center:[-77.5, 39.5], zoom:5 - ZO, maxPitch:70, attributionControl:false, dragRotate:false, pitchWithRotate:false, touchPitch:false,
-      boxZoom:false, fadeDuration:0});
+      boxZoom:false, maxTileCacheSize:600, fadeDuration:0});
     this.ml.touchZoomRotate.disableRotation(); this.ml.keyboard.disableRotation();
     this.attribution = new ml.AttributionControl({compact:false});
     this.ml.addControl(this.attribution, 'bottom-right');
@@ -287,13 +287,11 @@ class ATMap {
 }
 
 /* ---------- overlays: one GeoJSON source and its layers, drawn in one slot ----------
-   new Overlay(map, 'sel', 'sel', [{type:'line', paint:{...}}, ...], {tolerance, buffer}); .set(geojson or null); .show(on); .paint(i, prop, value) */
+   new Overlay(map, 'sel', 'sel', [{type:'line', paint:{...}}, ...]); .set(geojson or null); .show(on); .paint(i, prop, value) */
 const EMPTY = () => ({type:'FeatureCollection', features:[]});
 class Overlay {
-  /* o: {tolerance, buffer} for the source. tolerance is how far (in screen pixels, at every zoom) a line may be simplified:
-     larger draws faster. Long reference lines (state lines) take a large one; the default suits most things. */
-  constructor(map, id, slot, layers, o){ this.map = map; this.id = id; this.ids = layers.map((l, i) => id + '-' + i); this.on = true; o = o || {};
-    map.addSource(id, {type:'geojson', data:EMPTY(), tolerance:o.tolerance != null ? o.tolerance : .375, buffer:o.buffer != null ? o.buffer : 64});
+  constructor(map, id, slot, layers){ this.map = map; this.id = id; this.ids = layers.map((l, i) => id + '-' + i); this.on = true;
+    map.addSource(id, {type:'geojson', data:EMPTY(), tolerance:.2});
     layers.forEach((l, i) => map.addLayer(Object.assign({id:this.ids[i], source:id}, l), slot)); }
   set(g){ const s = this.map.ml.getSource(this.id); if (s) s.setData(g || EMPTY()); this.data = g; return this; }
   clear(){ return this.set(null); }
