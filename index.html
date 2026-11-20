@@ -51,8 +51,8 @@ h1 .at{color:var(--phen)}
   display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
 /* the lanternfly sits at the top left; drawn on a canvas (see the script) */
 #brand{display:block}
-#bug{width:clamp(160px,46vw,220px);margin:-6px 0 0 -10px;position:relative}
-#slf3d{position:relative;width:100%;aspect-ratio:1}
+#bug{width:clamp(150px,44vw,210px);margin:0 0 0 -6px;position:relative}
+#slf3d{position:relative;width:100%;aspect-ratio:650/500}
 #slf3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #slf3d img{display:none}
 /* the drawing, shown only if the photo pieces fail to load */
@@ -208,10 +208,7 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
 (function bug(){
   const box = document.getElementById('slf3d'); if (!box) return;
   const cv = box.querySelector('canvas'), ctx = cv.getContext('2d'), im = k => box.querySelector('img.' + k);
-  const WL = im('wl'), WR = im('wr'), BD = im('b'), W = 650, H = 430, HL = 283.4, HR = 362.7, CW = 640, CH = 640;
-  /* turned 28 degrees clockwise so the wings run diagonally, the left pair toward the top-left corner; scaled so the
-     insect (to 360 from its center, wings raised included) stays inside the square canvas at any angle */
-  const ROT = 28 * Math.PI / 180, S = .8;
+  const WL = im('wl'), WR = im('wr'), BD = im('b'), W = 650, H = 430, HL = 283.4, HR = 362.7, CW = 650, CH = 500;
   /* the flutter: energy e rises fast while the map zooms and dies away about a third of a second after it stops;
      the wings beat 9 times a second, their swing growing with e; with e at 0 the insect rests and nothing is redrawn */
   const ready = () => [WL, WR, BD].every(i => i.complete && i.naturalWidth);
@@ -234,15 +231,16 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
     size();
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    /* the shadow under it, turned with it, softer and smaller as the insect rises */
-    const sx = CW / 2, sy = CH / 2 + 70, sw = 250 * S * (1 - up / 90);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(sx, sy); ctx.rotate(ROT); ctx.scale(1, .26);
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, sw);
-    g.addColorStop(0, 'rgba(0,0,0,' + (.5 - up / 80).toFixed(3) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, sw, 0, P); ctx.fill();
-    /* the insect: centered, lifted by up, turned by ROT (and a little rz while it flutters) */
-    const cx = CW / 2, cy = CH / 2 - 6 - up;
-    const base = () => { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(cx, cy); ctx.rotate(ROT + rz); ctx.scale(S, S); };
+    /* the shadow on the card below, softer and smaller as the insect rises */
+    const sy = CH - 30, sw = 200 * (1 - up / 90);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const g = ctx.createRadialGradient(CW / 2, sy, 0, CW / 2, sy, sw);
+    g.addColorStop(0, 'rgba(0,0,0,' + (.55 - up / 80).toFixed(3) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save(); ctx.translate(CW / 2, sy); ctx.scale(1, .16); ctx.translate(-CW / 2, -sy); ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(CW / 2, sy, sw, 0, P); ctx.fill(); ctx.restore();
+    /* the insect: centered, lifted by up, turned by rz in the picture plane */
+    const cx = CW / 2, cy = CH - 60 - H * ct / 2 - up;
+    const base = () => { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(cx, cy); ctx.rotate(rz); };
     ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 6 * dpr; ctx.shadowOffsetY = 2 * dpr;
     /* left wings: x from the hinge (negative) maps to x cos a, and rises by -x sin a sin t */
     base(); ctx.translate(HL - W / 2, 0); ctx.transform(ca, -(-sa * st), 0, ct, 0, 0);
