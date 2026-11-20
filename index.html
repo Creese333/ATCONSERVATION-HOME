@@ -28,65 +28,61 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);overflow:hidden;
 .maplibregl-ctrl-top-left{display:none}
 /* the map credits sit small at the top right, out of the card's way */
 .maplibregl-ctrl-bottom-right{top:calc(env(safe-area-inset-top) + 62px);bottom:auto;right:6px;max-width:60vw}
-.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib{font-size:9px;line-height:1.3;background:transparent;color:var(--faint);margin:0;text-align:right;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib{font-size:8px;line-height:1.3;background:transparent;color:var(--faint);margin:0;text-align:right;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .maplibregl-ctrl-attrib a{color:var(--sub)}
 /* the dark edges keep the words readable over the imagery */
 #shade{position:fixed;inset:0;pointer-events:none;background:
   linear-gradient(180deg,rgba(0,0,0,.62) 0,rgba(0,0,0,0) 20%,rgba(0,0,0,0) 50%,rgba(0,0,0,.55) 100%)}
 header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
   padding:calc(env(safe-area-inset-top) + 14px) 20px 0;pointer-events:none}
-h1{margin:0;font-size:clamp(28px,5.4vw,44px);font-weight:700;letter-spacing:-.035em;line-height:1}
+h1{margin:0;font-size:clamp(24px,4.6vw,36px);font-weight:700;letter-spacing:-.035em;line-height:1}
 h1 .at{background:linear-gradient(160deg,#FFD60A,#FF9F0A 55%,#FF6B0A);-webkit-background-clip:text;background-clip:text;color:transparent}
 .glass{background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
   border:1px solid var(--edge);box-shadow:0 24px 60px rgba(0,0,0,.35)}
-#pp{pointer-events:auto;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink);cursor:pointer;padding:0}
+#pp{pointer-events:auto;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--ink);cursor:pointer;padding:0}
 #pp svg{width:14px;height:14px;fill:currentColor}
 #pp:focus-visible{outline:2px solid #0A84FF;outline-offset:2px}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 14px calc(env(safe-area-inset-bottom) + 14px);
   display:flex;flex-direction:column;align-items:center;pointer-events:none}
-/* the lanternfly floats over the top edge of the card */
-#bug{width:clamp(190px,56vw,250px);margin:0 0 -26px;position:relative;z-index:2}
-#slf3d{position:relative;width:100%;aspect-ratio:650/430}
-#slf3d .rig{position:absolute;inset:0;will-change:transform}
-#slf3d img{position:absolute;inset:0;width:100%;height:100%;display:block;will-change:transform;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
-#slf3d .wl{transform-origin:43.6% 50%}
-#slf3d .wr{transform-origin:55.8% 50%}
-#slf3d .shd{position:absolute;left:20%;right:20%;bottom:-2%;height:14%;border-radius:50%;
-  background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,0))}
+/* the lanternfly floats over the top edge of the card; drawn on a canvas (see the script) */
+#bug{width:clamp(170px,50vw,230px);margin:0 0 -34px;position:relative;z-index:2}
+#slf3d{position:relative;width:100%;aspect-ratio:650/500}
+#slf3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#slf3d img{display:none}
 /* the drawing, shown only if the photo pieces fail to load */
 #bug svg[hidden]{display:none}
 #bug svg{width:100%;height:auto;display:block;filter:drop-shadow(0 18px 14px rgba(0,0,0,.55))}
-#card{pointer-events:auto;width:100%;max-width:460px;border-radius:30px;padding:30px 22px 18px}
+#card{pointer-events:auto;width:100%;max-width:420px;border-radius:24px;padding:24px 18px 14px}
 #top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-#year{font-size:clamp(52px,14vw,68px);font-weight:700;letter-spacing:-.045em;line-height:.95;font-variant-numeric:tabular-nums;
+#year{font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1;font-variant-numeric:tabular-nums;
   background:linear-gradient(180deg,#FFE08A 0%,#FFB347 45%,#F97316 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-#count{font-size:13px;font-weight:500;color:var(--sub);text-align:right;font-variant-numeric:tabular-nums}
-#what{margin:10px 0 0;font-size:17px;line-height:1.35;font-weight:500;letter-spacing:-.01em;color:var(--ink)}
+#count{font-size:12px;font-weight:500;color:var(--sub);text-align:right;font-variant-numeric:tabular-nums}
+#what{margin:6px 0 0;font-size:14px;line-height:1.35;font-weight:500;letter-spacing:-.01em;color:var(--ink)}
 /* the timeline: one segment a year, filled in that year's dot color; tap one to hold on that year */
-#tl{display:flex;gap:5px;margin-top:18px}
-#tl button{flex:1;min-width:0;border:0;background:none;padding:8px 0 0;cursor:pointer;color:var(--faint);font:inherit;font-size:11px;font-weight:600;
-  font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:7px;align-items:center;transition:color .3s}
-#tl button b{display:block;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.16);overflow:hidden}
+#tl{display:flex;gap:4px;margin-top:12px}
+#tl button{flex:1;min-width:0;border:0;background:none;padding:8px 0 0;cursor:pointer;color:var(--faint);font:inherit;font-size:10px;font-weight:600;
+  font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:5px;align-items:center;transition:color .3s}
+#tl button b{display:block;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.16);overflow:hidden}
 #tl button b i{display:block;height:100%;width:0;border-radius:2px;background:var(--c)}
 #tl button.now{color:var(--ink)}
 #tl button.past{color:var(--sub)}
 #tl.ends button span{visibility:hidden}
 #tl.ends button:first-child span,#tl.ends button:last-child span,#tl.ends button.now span{visibility:visible}
 #tl button:focus-visible{outline:2px solid #0A84FF;outline-offset:2px;border-radius:4px}
-#act{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px;height:52px;border-radius:999px;
-  background:var(--ink);color:#1D1D1F;font-weight:700;font-size:17px;letter-spacing:-.01em;text-decoration:none;
+#act{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;height:44px;border-radius:999px;
+  background:var(--ink);color:#1D1D1F;font-weight:700;font-size:15px;letter-spacing:-.01em;text-decoration:none;
   transition:transform .25s var(--ease),background .25s}
 #act span{font-weight:500;color:#3A3A3C}
 #act svg{width:9px;height:14px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;margin-left:2px}
 #act:hover{background:#fff}
 #act:active{transform:scale(.97)}
 #act:focus-visible{outline:3px solid #0A84FF;outline-offset:3px}
-#credit{margin:12px 0 0;font-size:10px;line-height:1.35;color:var(--faint);text-align:center;max-width:420px}
-@media (max-width:420px){ #act{font-size:16px;gap:8px} #act span{font-size:15px} }
+#credit{margin:8px 0 0;font-size:9px;line-height:1.35;color:var(--faint);text-align:center;max-width:420px}
+@media (max-width:420px){ #act{gap:7px} #act span{font-size:14px} }
 @media (max-width:340px){ #act span{display:none} }
 @media (min-width:900px){
   #panel{align-items:flex-start;padding-left:40px;padding-bottom:calc(env(safe-area-inset-bottom) + 34px)}
-  #bug{align-self:auto;margin-left:105px}
+  #bug{align-self:auto;margin-left:95px}
   #credit{text-align:left;padding-left:6px}
   header{padding:26px 40px 0}
   .maplibregl-ctrl-bottom-right{top:auto;bottom:6px}
@@ -114,11 +110,11 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
 <main id="panel">
   <figure id="bug" class="rise" style="--d:.45s">
     <!-- the lanternfly in 3D: cut from the photo into a body and two wing pairs (images/slf-*.webp), the wings hinged at
-         the thorax. Moved by script each frame (not CSS animation), so it runs on every phone; the wing beat continues
-         with Reduce Motion on, only the drifting stops. -->
+         the thorax. Drawn on the canvas each frame with the 3D worked out in the script (no CSS 3D, which Safari draws
+         differently); the wing beat continues with Reduce Motion on, only the drifting stops. -->
     <div id="slf3d" role="img" aria-label="A spotted lanternfly, wings open, flapping">
-      <div class="shd"></div>
-      <div class="rig"><img class="w wl" src="images/slf-wl.webp" alt="" onerror="slfFail()"><img class="w wr" src="images/slf-wr.webp" alt="" onerror="slfFail()"><img class="b" src="images/slf-body.webp" alt="" onerror="slfFail()"></div>
+      <canvas></canvas>
+      <img class="wl" src="images/slf-wl.webp" alt="" onerror="slfFail()"><img class="wr" src="images/slf-wr.webp" alt="" onerror="slfFail()"><img class="b" src="images/slf-body.webp" alt="" onerror="slfFail()">
     </div>
     <!-- spotted lanternfly, wings open: grey forewings with black spots and a netted tip, red hindwings with black spots, a white band and black edges, yellow and black body -->
     <svg id="slfdraw" viewBox="0 0 260 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" hidden>
@@ -199,26 +195,51 @@ const setPlay = on => { playing = on; $('pp').setAttribute('aria-label', on ? 'P
 $('pp').addEventListener('click', () => setPlay(!playing));
 setPlay(playing);
 
-/* the lanternfly, moved frame by frame: a slow drift and tilt, and every 4 s the wings beat three times about their hinges */
+/* the lanternfly, drawn frame by frame on the canvas. The three pieces (650 x 430, lined up) are placed in 3D and
+   projected straight on (orthographic), which a 2D canvas transform does exactly: the insect lies tilted back by t from
+   face-on, and each wing pair turns up about its hinge (the line along the body at x = 283 or 363) by a.
+   A point dx from the hinge then lands at x = dx cos a, y = y cos t -/+ dx sin a sin t (it rises as the wing lifts). */
 (function bug(){
-  const rig = document.querySelector('#slf3d .rig'), wl = document.querySelector('#slf3d .wl'), wr = document.querySelector('#slf3d .wr'),
-    shd = document.querySelector('#slf3d .shd');
-  if (!rig) return;
-  const BEAT = [[0, 6], [.52, 6], [.59, 64], [.66, -4], [.73, 58], [.80, -2], [.87, 46], [.94, 6], [1, 6]];
+  const box = document.getElementById('slf3d'); if (!box) return;
+  const cv = box.querySelector('canvas'), ctx = cv.getContext('2d'), im = k => box.querySelector('img.' + k);
+  const WL = im('wl'), WR = im('wr'), BD = im('b'), W = 650, H = 430, HL = 283.4, HR = 362.7, CW = 650, CH = 500;
+  const BEAT = [[0, 4], [.52, 4], [.59, 62], [.66, -6], [.73, 56], [.80, -4], [.87, 44], [.94, 4], [1, 4]];
   const ease = x => x * x * (3 - 2 * x);
   const wing = f => { for (let i = 1; i < BEAT.length; i++) if (f <= BEAT[i][0]) { const [f0, a0] = BEAT[i - 1], [f1, a1] = BEAT[i];
-    return a0 + (a1 - a0) * ease((f - f0) / (f1 - f0)); } return 6; };
-  let t = 0, last = 0;
+    return a0 + (a1 - a0) * ease((f - f0) / (f1 - f0)); } return 4; };
+  const ready = () => [WL, WR, BD].every(i => i.complete && i.naturalWidth);
+  let t = 0, last = 0, dpr = 0;
+  const size = () => { const r = window.devicePixelRatio || 1, w = Math.round(cv.clientWidth * r), h = Math.round(cv.clientHeight * r);
+    if (w && (cv.width !== w || cv.height !== h)){ cv.width = w; cv.height = h; } dpr = cv.width / CW; };
   const frame = now => {
+    requestAnimationFrame(frame);
+    if (!ready()) return;
     const dt = last ? Math.min(.1, (now - last) / 1000) : 0; last = now;
-    if (playing || STILL) t += dt;   /* the wings keep beating under Reduce Motion; the pause button stops them */
-    const flap = (playing || STILL) ? wing((t % 4) / 4) : 6, d = STILL ? 0 : t, P = Math.PI * 2;
-    const tilt = 46 + 5 * Math.sin(P * d / 10), rz = 6 * Math.sin(P * d / 13), up = 4 + 4 * Math.sin(P * d / 7);
-    rig.style.transform = `perspective(900px) translateY(${-up}%) rotateX(${tilt}deg) rotateZ(${rz}deg)`;
-    wl.style.transform = `perspective(520px) rotateY(${flap}deg)`;
-    wr.style.transform = `perspective(520px) rotateY(${-flap}deg)`;
-    shd.style.transform = `scale(${1 - up / 40})`; shd.style.opacity = (1 - up / 14).toFixed(3);
-    requestAnimationFrame(frame); };
+    const moving = playing || STILL; if (moving) t += dt;   /* the wings keep beating under Reduce Motion; the pause button stops them */
+    const d = STILL ? 0 : t, P = Math.PI * 2, R = Math.PI / 180;
+    const tilt = (40 + 4 * Math.sin(P * d / 10)) * R, rz = 5 * Math.sin(P * d / 13) * R, up = 12 + 10 * Math.sin(P * d / 7);
+    const a = (moving ? wing((t % 4) / 4) : 4) * R, ct = Math.cos(tilt), st = Math.sin(tilt), ca = Math.cos(a), sa = Math.sin(a);
+    size();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    /* the shadow on the card below, softer and smaller as the insect rises */
+    const sy = CH - 30, sw = 190 * (1 - up / 90);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const g = ctx.createRadialGradient(CW / 2, sy, 0, CW / 2, sy, sw);
+    g.addColorStop(0, 'rgba(0,0,0,' + (.55 - up / 80).toFixed(3) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save(); ctx.translate(CW / 2, sy); ctx.scale(1, .16); ctx.translate(-CW / 2, -sy); ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(CW / 2, sy, sw, 0, P); ctx.fill(); ctx.restore();
+    /* the insect: centered, lifted by up, turned by rz in the picture plane */
+    const cx = CW / 2, cy = CH - 60 - H * ct / 2 - up;
+    const base = () => { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(cx, cy); ctx.rotate(rz); };
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 6 * dpr; ctx.shadowOffsetY = 2 * dpr;
+    /* left wings: x from the hinge (negative) maps to x cos a, and rises by -x sin a sin t */
+    base(); ctx.translate(HL - W / 2, 0); ctx.transform(ca, -(-sa * st), 0, ct, 0, 0);
+    ctx.transform(1, 0, 0, 1, 0, 0); ctx.drawImage(WL, -HL, -H / 2, W, H);
+    base(); ctx.translate(HR - W / 2, 0); ctx.transform(ca, -sa * st, 0, ct, 0, 0); ctx.drawImage(WR, -HR, -H / 2, W, H);
+    base(); ctx.transform(1, 0, 0, ct, 0, 0); ctx.drawImage(BD, -W / 2, -H / 2, W, H);
+    ctx.shadowColor = 'transparent';
+  };
   requestAnimationFrame(frame);
 })();
 
