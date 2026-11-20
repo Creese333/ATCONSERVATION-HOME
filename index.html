@@ -47,6 +47,7 @@ h1 .at{color:var(--phen)}
   padding:4px 8px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
 #bases button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:#1D1D1F}
 #bases button:focus-visible{outline:2px solid #0A84FF;outline-offset:1px}
+#camread{position:fixed;z-index:50;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 2px);background:rgba(0,0,0,.82);color:#FFE08A;font:600 11px/1.3 ui-monospace,Menlo,monospace;padding:3px 7px;border-radius:6px;pointer-events:none;white-space:nowrap}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 12px calc(env(safe-area-inset-bottom) + 12px);
   display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
 /* the lanternfly sits at the top left; drawn on a canvas (see the script) */
@@ -260,6 +261,10 @@ map.ready(() => {
   map.set3D(true, {animate:false});
   map.ml.jumpTo(VIEW);
   map.ml.on('zoom', () => window.slfBuzz && window.slfBuzz());   /* zooming sets the lanternfly fluttering */
+  /* ?cam in the address: a readout of the camera (center, MapLibre zoom, tilt, direction), for setting the opening view from a screenshot */
+  if (/[?&]cam\b/.test(location.search)){ const d = document.createElement('div'); d.id = 'camread'; document.body.appendChild(d);
+    const upd = () => { const m = map.ml, c = m.getCenter(); d.textContent = `cam ${c.lat.toFixed(4)}, ${c.lng.toFixed(4)} · z ${m.getZoom().toFixed(2)} · tilt ${Math.round(m.getPitch())} · dir ${Math.round((m.getBearing() + 360) % 360)}`; };
+    map.ml.on('move', upd); upd(); }
   /* the trail: a soft glow under a white line */
   const trail = new G.Overlay(map, 'hometrail', 'trail', [
     {type:'line', layout:{'line-join':'round', 'line-cap':'round'}, paint:{'line-color':'#FFFFFF', 'line-width':9, 'line-opacity':.18, 'line-blur':4}},
