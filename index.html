@@ -300,7 +300,7 @@ map.ready(() => {
   setBase('osm');
   fetch(SVC + 'ANST_Centerline/FeatureServer/0/query?' + q).then(r => r.ok ? r.json() : null).then(j => { if (j && j.features) trail.set(j); }).catch(() => {});
   /* the records: every year so far in its color, this year's larger and glowing */
-  const RAMP = ['#7A1F12', '#C2410C', '#F97316', '#FFB347', '#FFE08A'];
+  const RAMP = ['#FFE08A', '#FFB347', '#F97316', '#C2410C', '#7A1F12'];   /* first year light, each year darker */
   const recs = new G.Overlay(map, 'slf', 'feat', [
     {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 2, 14, 5], 'circle-color':['get', 'c'], 'circle-opacity':.9, 'circle-stroke-color':'#1A0D06', 'circle-stroke-width':.6, 'circle-pitch-alignment':'map'}},
     {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 6, 14, 14], 'circle-color':'#FFE08A', 'circle-opacity':.35, 'circle-blur':.9, 'circle-pitch-alignment':'map'}}]);
