@@ -323,23 +323,26 @@ map.ready(() => {
   const recs = new G.Overlay(map, 'slf', 'feat', [
     /* each record a small flat hexagon in its year's colour, no outline, lying on the ground; a little larger than the old dots */
     {type:'symbol', layout:{'icon-image':['concat', 'slfhex-', ['get', 'i']], 'icon-size':['interpolate', ['linear'], ['zoom'], 9, .19, 14, .44, 16, .6],
-      'icon-allow-overlap':true, 'icon-ignore-placement':true, 'icon-pitch-alignment':'map', 'icon-rotation-alignment':'map'}, paint:{'icon-opacity':.92}},
-    {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 6, 14, 14], 'circle-color':'#FFE08A', 'circle-opacity':.35, 'circle-blur':.9, 'circle-pitch-alignment':'map'}}]);
+      'icon-allow-overlap':true, 'icon-ignore-placement':true, 'icon-pitch-alignment':'map', 'icon-rotation-alignment':'map'}, paint:{'icon-opacity':['case', ['boolean', ['feature-state', 'on'], false], .92, 0]}},
+    {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 6, 14, 14], 'circle-color':'#FFE08A', 'circle-opacity':['case', ['boolean', ['feature-state', 'now'], false], .35, 0], 'circle-blur':.9, 'circle-pitch-alignment':'map'}}]);
   fetch(SRC + 'data/phen/lycorma-delicatula.json').then(r => r.json()).then(d => {
     /* each record: [day of year, year, ..., lat, lon, ...] */
     const pts = (d.pts || []).filter(p => p[4] >= BOX[0] && p[4] <= BOX[2] && p[3] >= BOX[1] && p[3] <= BOX[3]);
     if (!pts.length) return;
     const years = [...new Set(pts.map(p => p[1]))].sort((a, b) => a - b), y0 = years[0], y1 = years[years.length - 1];
     const ci = y => Math.round((y - y0) / Math.max(1, y1 - y0) * (RAMP.length - 1)), col = y => RAMP[ci(y)];
-    recs.set({type:'FeatureCollection', features:pts.map(p => ({type:'Feature', properties:{y:p[1], c:col(p[1]), i:ci(p[1])}, geometry:{type:'Point', coordinates:[p[4], p[3]]}}))});
+    recs.set({type:'FeatureCollection', features:pts.map((p, k) => ({type:'Feature', id:k, properties:{y:p[1], c:col(p[1]), i:ci(p[1])}, geometry:{type:'Point', coordinates:[p[4], p[3]]}}))});
     /* the timeline */
     const tl = $('tl'); tl.classList.toggle('ends', years.length > 8);
     const segs = years.map(y => { const b = document.createElement('button'); b.type = 'button'; b.style.setProperty('--c', col(y));
       b.setAttribute('aria-label', String(y)); b.innerHTML = '<b><i></i></b><span>' + y + '</span>'; tl.appendChild(b); return b; });
     const HOLD = 1700, END = 4500;
-    let cur = years.length - 1, timer = 0;
+    let cur = years.length - 1, timer = 0; const st = [];
     const show = (i, run) => { cur = i; const y = years[i];
-      map.ml.setFilter(recs.ids[0], ['<=', ['get', 'y'], y]); map.ml.setFilter(recs.ids[1], ['==', ['get', 'y'], y]);
+      /* shown and hidden through feature state, not setFilter: a filter change rebuilds the map's tiles each year, and on
+         phones those rebuilds pile up and the years stop showing. Only records whose state changes are touched. */
+      pts.forEach((p, k) => { const on = p[1] <= y, now = p[1] === y, s = st[k];
+        if (!s || s.on !== on || s.now !== now){ st[k] = {on, now}; map.ml.setFeatureState({source:recs.id, id:k}, st[k]); } });
       const n = pts.filter(p => p[1] <= y).length;
       const yr = $('year'); if (yr.textContent !== String(y)){ yr.textContent = y;
         if (yr.animate && !STILL) yr.animate([{opacity:0, transform:'translateY(10px)', filter:'blur(6px)'}, {opacity:1, transform:'none', filter:'blur(0)'}], {duration:550, easing:'cubic-bezier(.22,.8,.24,1)'}); }
