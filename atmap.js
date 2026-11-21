@@ -184,7 +184,7 @@ class ATMap {
     SLOTS.forEach(s => layers.push({id:'slot:' + s, type:'fill', source:'empty', paint:{'fill-opacity':0}}));
     this.ml = new ml.Map({container:this._el, style:{version:8, sources, layers},
       minZoom:(o.minZoom != null ? o.minZoom : 4) - ZO, maxZoom:(o.maxZoom != null ? o.maxZoom : 18) - ZO,
-      center:[-77.5, 39.5], zoom:5 - ZO, maxPitch:70, attributionControl:false, dragRotate:false, pitchWithRotate:false, touchPitch:false,
+      center:[-77.5, 39.5], zoom:5 - ZO, maxPitch:70, attributionControl:false, dragRotate:false, pitchWithRotate:true, touchPitch:false,   /* pitchWithRotate: in 3D (dragRotate on) right-drag up and down tilts */
       boxZoom:false, maxTileCacheSize:600, fadeDuration:0});
     this.ml.touchZoomRotate.disableRotation(); this.ml.keyboard.disableRotation();
     this.attribution = new ml.AttributionControl({compact:false});
