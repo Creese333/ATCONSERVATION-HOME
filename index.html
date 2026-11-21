@@ -227,10 +227,10 @@ const BOX = [-77.85, 39.15, -77.45, 39.55];
 /* the opening view: Harpers Ferry from the southwest, the footbridge and the towpath toward Sandy Hook ahead, the Shenandoah
    to the right (matched to Casey's phone screenshot, Nov 2026; MapLibre zoom) */
 const VIEW = {center:[-77.7328, 39.3231], zoom:14.1, pitch:57, bearing:63};
-/* with Reduce Motion on, the camera holds still and the years show the latest; zooming still sets the wings fluttering */
+/* with Reduce Motion on, the camera holds still (the years still play); zooming still sets the wings fluttering */
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
-let playing = !STILL;
+let playing = true;   /* the years always play, Reduce Motion or not; Reduce Motion only stops the camera sway */
 const hooks = [];   /* called with the new playing state */
 let resume = 0;
 const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
@@ -322,7 +322,7 @@ map.ready(() => {
     'fill-opacity':['case', ['boolean', ['feature-state', 'on'], false], .92, 0]}}]);
   const glow = new G.Overlay(map, 'slfnow', 'feat', [{type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 6, 14, 14, 18, 60],
     'circle-color':'#FFE08A', 'circle-opacity':['case', ['boolean', ['feature-state', 'now'], false], .35, 0], 'circle-blur':.9, 'circle-pitch-alignment':'map'}}]);
-  const HEX = 45;   /* hexagon radius, metres */
+  const HEX = 18;   /* hexagon radius, metres */
   const hex = (lon, lat) => { const ring = []; for (let k = 0; k <= 6; k++){ const a = Math.PI / 3 * (k % 6);
     ring.push([lon + HEX * Math.cos(a) / (111320 * Math.cos(lat * Math.PI / 180)), lat + HEX * Math.sin(a) / 110574]); } return [ring]; };
   fetch(SRC + 'data/phen/lycorma-delicatula.json').then(r => r.json()).then(d => {
@@ -354,7 +354,7 @@ map.ready(() => {
     const step = () => { clearTimeout(timer); if (!playing) return; const i = cur;
       show(i, true); timer = setTimeout(() => { cur = i === years.length - 1 ? 0 : i + 1; step(); }, i === years.length - 1 ? END : HOLD); };
     segs.forEach((s, k) => s.addEventListener('click', () => { if (playing) setPlay(false); clearTimeout(timer); show(k, false);   /* a tapped year holds 8 s, then the years play on */
-      clearTimeout(resume); if (!STILL) resume = setTimeout(() => setPlay(true), 8000); }));
+      clearTimeout(resume); resume = setTimeout(() => setPlay(true), 8000); }));
     hooks.push(on => { clearTimeout(timer); if (on){ if (cur === years.length - 1) cur = 0; step(); } else show(cur, false); });
     if (playing){ cur = 0; step(); } else show(cur, false);
   }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail in Harpers Ferry, WV'; });
@@ -364,7 +364,7 @@ map.ready(() => {
      also cancels the pinch or scroll the person is starting, so the map would never zoom.) */
   let spin = false, idle = 0, lastT = 0, ph = 0, base = VIEW.bearing;
   const turn = now => { requestAnimationFrame(turn); const dt = lastT ? Math.min(.1, (now - lastT) / 1000) : 0; lastT = now;
-    if (!spin || !playing || !dt || map.ml.isMoving()) return; ph += dt; map.ml.setBearing(base + 7 * Math.sin(2 * Math.PI * ph / 50)); };
+    if (STILL || !spin || !playing || !dt || map.ml.isMoving()) return; ph += dt; map.ml.setBearing(base + 7 * Math.sin(2 * Math.PI * ph / 50)); };
   const hold = () => { spin = false; clearTimeout(idle); idle = setTimeout(() => { base = map.ml.getBearing(); ph = 0; spin = true; }, 9000); };
   ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true, capture:true}));
   setTimeout(() => { spin = true; requestAnimationFrame(turn); }, 1200);
