@@ -78,6 +78,15 @@ h1 .at{color:var(--phen)}
 #top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 #year{font-size:22px;font-weight:700;letter-spacing:-.035em;line-height:1;font-variant-numeric:tabular-nums;
   color:var(--phen)}
+/* the small green play button beside the year: plays 2021 to the latest once; a pause while playing */
+#yrs{display:flex;align-items:center;gap:8px}
+#play{flex:none;width:19px;height:19px;border-radius:50%;border:0;padding:0;background:#2E9E4F;color:#fff;cursor:pointer;
+  display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.35);align-self:center}
+#play svg{width:8px;height:9px;display:block;margin-left:1px}
+#play .ps{display:none}
+#play.on .pl{display:none}
+#play.on .ps{display:block}
+@media (hover:hover){#play:hover{background:#38B85D}}
 #count{font-size:10.5px;font-weight:500;color:var(--sub);text-align:right;font-variant-numeric:tabular-nums}
 #what{margin:3px 0 0;font-size:12px;line-height:1.35;font-weight:500;letter-spacing:-.01em;color:var(--ink)}
 /* the timeline: one segment a year, filled in that year's dot color; tap one to hold on that year */
@@ -116,6 +125,9 @@ h1 .at{color:var(--phen)}
   #card{max-width:none;border-radius:26px;padding:clamp(20px,1.4vw,28px) clamp(20px,1.5vw,30px) clamp(16px,1.1vw,22px)}
   #year{font-size:clamp(40px,2.7vw,58px)}
   #count{font-size:clamp(13px,.85vw,17px)}
+  #yrs{gap:12px}
+  #play{width:clamp(32px,2.1vw,44px);height:clamp(32px,2.1vw,44px)}
+  #play svg{width:clamp(12px,.8vw,16px);height:clamp(14px,.9vw,18px)}
   #what{font-size:clamp(15px,1vw,20px);margin-top:8px}
   #tl{margin-top:16px;gap:5px}
   #tl button{font-size:clamp(10.5px,.7vw,14px);gap:6px}
@@ -209,7 +221,7 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
   <div id="go" class="rise" style="--d:.25s">  <a id="act" href="https://act.atconservation.com/">ACT <span>Appalachian Conservation Tool</span><svg viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5l6 5.5-6 5.5"/></svg></a>
   </div>
   <section id="card" class="glass rise" style="--d:.3s">
-    <div id="top"><div id="year" aria-live="polite">&nbsp;</div><div id="count">&nbsp;</div></div>
+    <div id="top"><div id="yrs"><div id="year" aria-live="polite">&nbsp;</div><button id="play" type="button" aria-label="Play the years" hidden><svg class="pl" viewBox="0 0 9 10"><path d="M1 .6v8.8L8.4 5z" fill="currentColor"/></svg><svg class="ps" viewBox="0 0 9 10"><path d="M1 .6h2.3v8.8H1zM5.7 .6H8v8.8H5.7z" fill="currentColor"/></svg></button></div><div id="count">&nbsp;</div></div>
     <p id="what">Spotted lanternfly along the Appalachian Trail in Harpers Ferry, WV, year by year</p>
     <div id="tl" aria-label="Years"></div>
   </section>
@@ -230,9 +242,8 @@ const VIEW = {center:[-77.7328, 39.3231], zoom:14.1, pitch:57, bearing:63};
 /* with Reduce Motion on, the camera holds still (the years still play); zooming still sets the wings fluttering */
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
-let playing = true;   /* the years always play, Reduce Motion or not; Reduce Motion only stops the camera sway */
+let playing = false;   /* the page opens on the latest year; the play button plays the years through once */
 const hooks = [];   /* called with the new playing state */
-let resume = 0;
 const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
 
 /* the lanternfly, drawn frame by frame on the canvas. The three pieces (650 x 430, lined up) are placed in 3D and
@@ -352,11 +363,13 @@ map.ready(() => {
         const f = s.firstChild.firstChild; f.style.transition = 'none'; f.style.width = k < i ? '100%' : '0';
         if (k === i){ if (run){ void f.offsetWidth; f.style.transition = 'width ' + (i === years.length - 1 ? END : HOLD) + 'ms linear'; } f.style.width = '100%'; } }); };
     const step = () => { clearTimeout(timer); if (!playing) return; const i = cur;
-      show(i, true); timer = setTimeout(() => { cur = i === years.length - 1 ? 0 : i + 1; step(); }, i === years.length - 1 ? END : HOLD); };
-    segs.forEach((s, k) => s.addEventListener('click', () => { if (playing) setPlay(false); clearTimeout(timer); show(k, false);   /* a tapped year holds 8 s, then the years play on */
-      clearTimeout(resume); resume = setTimeout(() => setPlay(true), 8000); }));
-    hooks.push(on => { clearTimeout(timer); if (on){ if (cur === years.length - 1) cur = 0; step(); } else show(cur, false); });
-    if (playing){ cur = 0; step(); } else show(cur, false);
+      show(i, true); timer = setTimeout(() => { if (i === years.length - 1) return setPlay(false); cur = i + 1; step(); }, i === years.length - 1 ? END : HOLD); };   /* once through, then rest on the latest year */
+    segs.forEach((s, k) => s.addEventListener('click', () => { if (playing) setPlay(false); clearTimeout(timer); show(k, false); }));   /* a tapped year stays */
+    const pb = $('play'); pb.hidden = false;
+    pb.addEventListener('click', () => setPlay(!playing));
+    hooks.push(on => { clearTimeout(timer); pb.classList.toggle('on', on); pb.setAttribute('aria-label', on ? 'Pause' : 'Play the years');
+      if (on){ if (cur === years.length - 1) cur = 0; step(); } else show(cur, false); });
+    show(cur, false);
   }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail in Harpers Ferry, WV'; });
   /* the camera sways gently, 7 degrees either way over 50 s, around the direction it faces, so the chosen view stays.
      Touching, clicking or scrolling the map pauses it for 9 s; it then sways around wherever the person left it.
@@ -364,7 +377,7 @@ map.ready(() => {
      also cancels the pinch or scroll the person is starting, so the map would never zoom.) */
   let spin = false, idle = 0, lastT = 0, ph = 0, base = VIEW.bearing;
   const turn = now => { requestAnimationFrame(turn); const dt = lastT ? Math.min(.1, (now - lastT) / 1000) : 0; lastT = now;
-    if (STILL || !spin || !playing || !dt || map.ml.isMoving()) return; ph += dt; map.ml.setBearing(base + 7 * Math.sin(2 * Math.PI * ph / 50)); };
+    if (STILL || !spin || !dt || map.ml.isMoving()) return; ph += dt; map.ml.setBearing(base + 7 * Math.sin(2 * Math.PI * ph / 50)); };
   const hold = () => { spin = false; clearTimeout(idle); idle = setTimeout(() => { base = map.ml.getBearing(); ph = 0; spin = true; }, 9000); };
   ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true, capture:true}));
   setTimeout(() => { spin = true; requestAnimationFrame(turn); }, 1200);
