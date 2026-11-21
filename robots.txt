@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://atconservation.com/sitemap.xml
+Sitemap: https://act.atconservation.com/sitemap.xml
