@@ -327,23 +327,25 @@ map.ready(() => {
   fetch(SVC + 'ANST_Centerline/FeatureServer/0/query?' + q).then(r => r.ok ? r.json() : null).then(j => { if (j && j.features) trail.set(j); }).catch(() => {});
   /* the records: every year so far in its color, this year's larger and glowing */
   const RAMP = ['#FFE08A', '#FFB347', '#F97316', '#C2410C', '#7A1F12'];   /* first year light, each year darker */
-  /* each record a flat hexagon on the ground in its year's colour, no outline (a filled shape, not a map symbol: symbol
-     layers are slow to redraw on phones), and a soft glow under the year now playing */
-  const recs = new G.Overlay(map, 'slf', 'feat', [{type:'fill', paint:{'fill-color':['get', 'c'], 'fill-antialias':false,
-    'fill-opacity':['case', ['boolean', ['feature-state', 'on'], false], .92, 0]}}]);
-  const glow = new G.Overlay(map, 'slfnow', 'feat', [{type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 6, 14, 14, 18, 60],
-    'circle-color':'#FFE08A', 'circle-opacity':['case', ['boolean', ['feature-state', 'now'], false], .35, 0], 'circle-blur':.9, 'circle-pitch-alignment':'map'}}]);
-  const HEX = 18;   /* hexagon radius, metres */
-  const hex = (lon, lat) => { const ring = []; for (let k = 0; k <= 6; k++){ const a = Math.PI / 3 * (k % 6);
-    ring.push([lon + HEX * Math.cos(a) / (111320 * Math.cos(lat * Math.PI / 180)), lat + HEX * Math.sin(a) / 110574]); } return [ring]; };
+  /* each record a hexagon lying flat on the ground in its year's colour, no outline, and a soft glow under the year now
+     playing. Hexagons are icons so their size can follow the zoom: about 10 px across at the opening view, smaller as you
+     zoom in or out, so close up they stay small marks. Shown and hidden through feature state (see show). */
+  RAMP.forEach((c, i) => { const n = 64, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'), r = n / 2 - 1;
+    x.beginPath(); for (let k = 0; k < 6; k++){ const a = Math.PI / 3 * k; x.lineTo(n / 2 + r * Math.cos(a), n / 2 + r * Math.sin(a)); } x.closePath(); x.fillStyle = c; x.fill();
+    if (!map.ml.hasImage('slfhex-' + i)) map.ml.addImage('slfhex-' + i, x.getImageData(0, 0, n, n), {pixelRatio:2}); });
+  const recs = new G.Overlay(map, 'slf', 'feat', [
+    {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 5, 14, 12, 17, 9], 'circle-color':'#FFE08A',
+      'circle-opacity':['case', ['boolean', ['feature-state', 'now'], false], .35, 0], 'circle-blur':.9, 'circle-pitch-alignment':'map'}},
+    {type:'symbol', layout:{'icon-image':['concat', 'slfhex-', ['get', 'i']], 'icon-size':['interpolate', ['linear'], ['zoom'], 9, .3, 12, .5, 14, .66, 15.5, .5, 17, .36],
+      'icon-allow-overlap':true, 'icon-ignore-placement':true, 'icon-pitch-alignment':'map', 'icon-rotation-alignment':'map'},
+     paint:{'icon-opacity':['case', ['boolean', ['feature-state', 'on'], false], .92, 0]}}]);
   fetch(SRC + 'data/phen/lycorma-delicatula.json').then(r => r.json()).then(d => {
     /* each record: [day of year, year, ..., lat, lon, ...] */
     const pts = (d.pts || []).filter(p => p[4] >= BOX[0] && p[4] <= BOX[2] && p[3] >= BOX[1] && p[3] <= BOX[3]);
     if (!pts.length) return;
     const years = [...new Set(pts.map(p => p[1]))].sort((a, b) => a - b), y0 = years[0], y1 = years[years.length - 1];
-    const col = y => RAMP[Math.round((y - y0) / Math.max(1, y1 - y0) * (RAMP.length - 1))];
-    recs.set({type:'FeatureCollection', features:pts.map((p, k) => ({type:'Feature', id:k, properties:{c:col(p[1])}, geometry:{type:'Polygon', coordinates:hex(p[4], p[3])}}))});
-    glow.set({type:'FeatureCollection', features:pts.map((p, k) => ({type:'Feature', id:k, properties:{}, geometry:{type:'Point', coordinates:[p[4], p[3]]}}))});
+    const ci = y => Math.round((y - y0) / Math.max(1, y1 - y0) * (RAMP.length - 1)), col = y => RAMP[ci(y)];
+    recs.set({type:'FeatureCollection', features:pts.map((p, k) => ({type:'Feature', id:k, properties:{i:ci(p[1])}, geometry:{type:'Point', coordinates:[p[4], p[3]]}}))});
     /* the timeline */
     const tl = $('tl'); tl.classList.toggle('ends', years.length > 8);
     const segs = years.map(y => { const b = document.createElement('button'); b.type = 'button'; b.style.setProperty('--c', col(y));
@@ -354,7 +356,7 @@ map.ready(() => {
       /* shown and hidden through feature state, not setFilter: a filter change rebuilds the map's tiles each year, and on
          phones those rebuilds pile up and the years stop showing. Only records whose state changes are touched. */
       pts.forEach((p, k) => { const on = p[1] <= y, now = p[1] === y, s = st[k];
-        if (!s || s.on !== on || s.now !== now){ st[k] = {on, now}; map.ml.setFeatureState({source:recs.id, id:k}, {on}); map.ml.setFeatureState({source:glow.id, id:k}, {now}); } });
+        if (!s || s.on !== on || s.now !== now){ st[k] = {on, now}; map.ml.setFeatureState({source:recs.id, id:k}, st[k]); } });
       const n = pts.filter(p => p[1] <= y).length;
       const yr = $('year'); if (yr.textContent !== String(y)){ yr.textContent = y;
         if (yr.animate && !STILL) yr.animate([{opacity:0, transform:'translateY(10px)', filter:'blur(6px)'}, {opacity:1, transform:'none', filter:'blur(0)'}], {duration:550, easing:'cubic-bezier(.22,.8,.24,1)'}); }
