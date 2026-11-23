@@ -46,7 +46,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);overflow:hidden;
 #map{position:fixed;inset:0}
 .maplibregl-ctrl-top-left{display:none}
 /* the map credits sit small at the top right, out of the card's way */
-.maplibregl-ctrl-bottom-right{top:calc(env(safe-area-inset-top) + 48px);bottom:auto;right:6px;max-width:48vw}
+.maplibregl-ctrl-bottom-right{top:calc(env(safe-area-inset-top) + 44px);bottom:auto;right:6px;max-width:48vw}
 .maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib{font-size:8px;line-height:1.3;background:transparent;color:var(--faint);margin:0;text-align:right;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .maplibregl-ctrl-attrib a{color:var(--sub)}
 /* the dark edges keep the words readable over the imagery */
@@ -61,20 +61,20 @@ h1 .at{color:var(--phen)}
   border:1px solid var(--edge);box-shadow:0 24px 60px rgba(0,0,0,.35)}
 /* the basemap switch: imagery or OpenStreetMap */
 #bases{pointer-events:auto;display:flex;padding:2px;border-radius:999px;flex:none;position:absolute;right:10px;top:calc(env(safe-area-inset-top) + 10px)}
-#bases button{border:0;background:none;color:var(--sub);font:inherit;font-size:12.5px;font-weight:600;letter-spacing:-.01em;
-  padding:6px 11px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
+#bases button{border:0;background:none;color:var(--sub);font:inherit;font-size:11.5px;font-weight:600;letter-spacing:-.01em;
+  padding:5px 10px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
 #bases button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:#1D1D1F}
 #bases button:focus-visible{outline:2px solid #0A84FF;outline-offset:1px}
-#spin{display:none;pointer-events:auto;position:absolute;right:40px;top:calc(22px + clamp(42px,2.9vw,52px) + 12px);flex-direction:column;align-items:center;gap:10px;padding:10px 0 14px;width:52px;border-radius:26px}
-#spinplay{width:36px;height:36px;border-radius:50%;border:0;padding:0;background:#2E9E4F;color:#fff;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
-#spinplay svg{width:12px;height:13px;display:block}
+#spin{display:none;pointer-events:auto;position:absolute;right:40px;top:calc(22px + clamp(34px,2.3vw,40px) + 10px);flex-direction:column;align-items:center;gap:7px;padding:7px 0 10px;width:38px;border-radius:19px}
+#spinplay{width:26px;height:26px;border-radius:50%;border:0;padding:0;background:#2E9E4F;color:#fff;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+#spinplay svg{width:9px;height:10px;display:block}
 #spinplay .pl{margin-left:2px}
 #spinplay .ps,#spinplay.on .pl{display:none}
 #spinplay.on .ps{display:block}
 @media (hover:hover){#spinplay:hover{background:#38B85D}}
 #spinplay:focus-visible,#spinspd:focus-visible{outline:2px solid #0A84FF;outline-offset:2px}
-#spinspd{writing-mode:vertical-lr;direction:ltr;width:20px;height:130px;margin:0;accent-color:#F5F5F7;cursor:pointer}
-#spin .sl{font-size:10px;color:var(--sub);line-height:1}
+#spinspd{writing-mode:vertical-lr;direction:ltr;width:16px;height:84px;margin:0;accent-color:#F5F5F7;cursor:pointer}
+#spin .sl{font-size:9px;color:var(--sub);line-height:1}
 #camread{position:fixed;z-index:50;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 2px);background:rgba(0,0,0,.82);color:#FFE08A;font:600 11px/1.3 ui-monospace,Menlo,monospace;padding:3px 7px;border-radius:6px;pointer-events:none;white-space:nowrap}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 12px calc(env(safe-area-inset-bottom) + 12px);
   display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
@@ -171,7 +171,7 @@ body.leaving #veil{opacity:1}
 @media (min-width:900px){
   header{padding:22px 40px 0}
   #bases{right:40px;top:22px;padding:3px}
-  #bases button{font-size:clamp(15px,1vw,19px);padding:clamp(8px,.55vw,11px) clamp(16px,1.1vw,22px)}
+  #bases button{font-size:clamp(12.5px,.8vw,15px);padding:clamp(6px,.4vw,8px) clamp(12px,.8vw,15px)}
   .maplibregl-ctrl-bottom-right{top:auto;bottom:6px;right:10px}
   /* the camera's turn: play or pause, and a slider down from slow (the gentle sway) to fast (a full, steady turn) */
   #spin{display:flex}
