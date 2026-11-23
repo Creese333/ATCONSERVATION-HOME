@@ -228,9 +228,9 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
 </header>
 <div id="veil" aria-hidden="true"></div>
 <main id="panel">
-  <div id="go" class="rise" style="--d:.25s">  <a id="act" class="glass" href="https://act.atconservation.com/" aria-label="Open ACT, the Appalachian Trail data index">
+  <div id="go" class="rise" style="--d:.25s">  <a id="act" class="glass" href="https://act.atconservation.com/" aria-label="Open ACT, the Appalachian Conservation Tool">
     <span class="door" aria-hidden="true"><img class="fr" src="images/door.jpg" alt=""><span class="in"></span><img class="lf" src="images/door-l.jpg" alt=""><img class="rt" src="images/door-r.jpg" alt=""></span>
-    <span class="lbl"><b>ACT</b><span>Appalachian Trail data index</span><i>Visualize, analyze, export</i></span></a>
+    <span class="lbl"><b>ACT</b><span>Appalachian Conservation Tool</span><i>Visualize, analyze, export</i></span></a>
   </div>
   <section id="card" class="glass rise" style="--d:.3s">
     <div id="top"><div id="yrs"><div id="year" aria-live="polite">&nbsp;</div><button id="play" type="button" aria-label="Play the years" hidden><svg class="pl" viewBox="0 0 9 10"><path d="M1 .6v8.8L8.4 5z" fill="currentColor"/></svg><svg class="ps" viewBox="0 0 9 10"><path d="M1 .6h2.3v8.8H1zM5.7 .6H8v8.8H5.7z" fill="currentColor"/></svg></button></div><div id="count">&nbsp;</div></div>
@@ -399,11 +399,10 @@ map.ready(() => {
 })();
 </script>
 <script>
-/* the door: a click swings both leaves open, ACT's navy fills the screen, then ACT opens. Reduce Motion, or a click
-   that opens a new tab, goes straight there. Coming back (the back button) shows the door closed again. */
+/* the door: a click swings both leaves open, ACT's navy fills the screen, then ACT opens. It plays with Reduce Motion
+   on too (it only moves when tapped); a click that opens a new tab goes straight there. Coming back (the back button) shows the door closed again. */
 (() => { const a = document.getElementById('act'); if (!a) return;
   a.addEventListener('click', e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     e.preventDefault(); a.classList.add('open');
     setTimeout(() => document.body.classList.add('leaving'), 520); setTimeout(() => { location.href = a.href; }, 1000); });
   addEventListener('pageshow', () => { a.classList.remove('open'); document.body.classList.remove('leaving'); });
