@@ -354,9 +354,9 @@ map.ready(() => {
     x.beginPath(); for (let k = 0; k < 6; k++){ const a = Math.PI / 3 * k; x.lineTo(n / 2 + r * Math.cos(a), n / 2 + r * Math.sin(a)); } x.closePath(); x.fillStyle = c; x.fill();
     if (!map.ml.hasImage('slfhex-' + i)) map.ml.addImage('slfhex-' + i, x.getImageData(0, 0, n, n), {pixelRatio:2}); });
   const recs = new G.Overlay(map, 'slf', 'feat', [
-    {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 5, 14, 12, 17, 9], 'circle-color':'#FFE08A',
+    {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 5, 14, 12, 17, 11], 'circle-color':'#FFE08A',
       'circle-opacity':['case', ['boolean', ['feature-state', 'now'], false], .35, 0], 'circle-blur':.9, 'circle-pitch-alignment':'map'}},
-    {type:'symbol', layout:{'icon-image':['concat', 'slfhex-', ['get', 'i']], 'icon-size':['interpolate', ['linear'], ['zoom'], 9, .3, 12, .5, 14, .66, 15.5, .5, 17, .36],
+    {type:'symbol', layout:{'icon-image':['concat', 'slfhex-', ['get', 'i']], 'icon-size':['interpolate', ['linear'], ['zoom'], 9, .3, 12, .5, 14, .66, 15.5, .54, 17, .44],
       'icon-allow-overlap':true, 'icon-ignore-placement':true, 'icon-pitch-alignment':'map', 'icon-rotation-alignment':'map'},
      paint:{'icon-opacity':['case', ['boolean', ['feature-state', 'on'], false], .92, 0]}}]);
   fetch(SRC + 'data/phen/lycorma-delicatula.json').then(r => r.json()).then(d => {
