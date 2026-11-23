@@ -339,7 +339,7 @@ const BOX = [-77.85, 39.15, -77.45, 39.55];
    phones keep their own */
 const DESK = matchMedia('(min-width:900px)').matches;
 const VIEW = DESK ? {center:[-77.7455, 39.3214], zoom:14.32, pitch:55, bearing:319}
-  : {center:[-77.7328, 39.3231], zoom:14.1, pitch:57, bearing:63};
+  : {center:[-77.7625, 39.3170], zoom:12.1, pitch:57, bearing:63};   /* phones: one view for both sets, Casey's ?cam readout with the lightning bugs, Nov 23 2026 */
 /* lightning bugs are spread wider than the lanternfly (Shepherdstown, South Mountain, Boonsboro), so picking them eases out to
    a wider view of Harpers Ferry and the hills around it; a first guess, to be set with ?cam while they are on show */
 const FFVIEW = DESK ? {center:[-77.69, 39.385], zoom:11.7, pitch:52, bearing:345} : {center:[-77.7625, 39.3170], zoom:12.1, pitch:57, bearing:63};   /* phones: Casey's ?cam readout, Nov 23 2026 */
