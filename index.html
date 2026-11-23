@@ -121,6 +121,37 @@ h1 .at{color:var(--phen)}
 .lbl span{font-size:15.5px;font-weight:600;color:var(--ink);white-space:nowrap}
 .lbl i{font-style:normal;font-size:14.5px;color:var(--sub);white-space:nowrap}
 @media (max-width:370px){ .door{width:62px} .lbl b{font-size:21px} .lbl span{font-size:13.5px} .lbl i{font-size:13px} #act{gap:11px;padding:8px 14px 8px 8px} }
+/* the card for a tapped hexagon: a popup on the map on computers, in place of the door and year cards on phones */
+#cellcard{position:relative;pointer-events:auto;width:100%;max-width:350px;margin-bottom:8px;background:rgba(22,26,32,.94);color:#F5F5F7;border-radius:18px;padding:14px 14px 12px;box-shadow:0 12px 32px rgba(0,0,0,.45)}
+#cellcard[hidden]{display:none}
+#cellcard .cc-x{position:absolute;right:6px;top:6px;width:34px;height:34px;border:0;border-radius:50%;background:none;color:#C7C7CC;font-size:22px;line-height:1;cursor:pointer}
+body.cellopen #go,body.cellopen #card{display:none}
+.slfpop .maplibregl-popup-content{background:rgba(22,26,32,.94);color:#F5F5F7;border-radius:16px;padding:14px 14px 12px;box-shadow:0 12px 32px rgba(0,0,0,.45);font:inherit;width:270px}
+.slfpop.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,.slfpop.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,.slfpop.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{border-top-color:rgba(22,26,32,.94)}
+.slfpop.maplibregl-popup-anchor-top .maplibregl-popup-tip,.slfpop.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,.slfpop.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{border-bottom-color:rgba(22,26,32,.94)}
+.slfpop.maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:rgba(22,26,32,.94)}
+.slfpop.maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:rgba(22,26,32,.94)}
+.slfpop .maplibregl-popup-close-button{color:#C7C7CC;font-size:20px;width:30px;height:30px;right:2px;top:2px;border-radius:50%}
+.slfpop .maplibregl-popup-close-button:hover{background:rgba(255,255,255,.1)}
+.sp-wait{font-size:13px;color:#C7C7CC;padding:4px 24px 4px 0}
+.sp-h{font-size:12px;color:#AEAEB2;padding-right:26px}
+.sp-n{font-size:15px;font-weight:600;margin-top:2px}
+.sp-n b{color:#FFB347;font-size:19px}
+.sp-ch{display:flex;align-items:flex-end;gap:6px;height:74px;margin:10px 0 4px}
+.sp-ch>div{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;font-size:10px;color:#AEAEB2}
+.sp-ch i{display:block;width:100%;border-radius:3px 3px 1px 1px}
+.sp-ch .sp-v{color:#F5F5F7;font-size:10.5px;min-height:12px}
+.sp-f{font-size:12.5px;color:#D1D1D6;margin-top:6px}
+.sp-o{display:flex;gap:10px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
+.sp-img{flex:none;width:72px;height:72px;border-radius:10px;background:rgba(255,255,255,.08);overflow:hidden}
+.sp-img img{width:100%;height:100%;object-fit:cover;display:block}
+.sp-d{font-size:13px;font-weight:600}
+.sp-o a{font-size:13px;color:#9FD0FF;text-decoration:none}
+.sp-o a:hover{text-decoration:underline}
+.sp-c{font-size:10px;color:#8E8E93;margin-top:3px;line-height:1.3}
+.sp-act{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;height:38px;border-radius:999px;background:#F5F5F7;color:#1D1D1F;font-weight:700;font-size:14px;text-decoration:none}
+.sp-act svg{width:7px;height:11px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.sp-act:hover{background:#fff}
 #veil{position:fixed;inset:0;background:#142235;opacity:0;pointer-events:none;transition:opacity .45s ease;z-index:50}
 body.leaving #veil{opacity:1}
 #act:focus-visible{outline:3px solid #0A84FF;outline-offset:3px}
@@ -236,6 +267,7 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
 </header>
 <div id="veil" aria-hidden="true"></div>
 <main id="panel">
+  <section id="cellcard" hidden aria-live="polite"><button class="cc-x" type="button" aria-label="Close">&times;</button><div class="cc-b"></div></section>
   <div id="go" class="rise" style="--d:.25s">  <a id="act" class="glass" href="https://act.atconservation.com/" aria-label="Open ACT, the Appalachian Conservation Tool">
     <span class="door" aria-hidden="true"><img class="fr" src="images/door.jpg" alt=""><span class="in"></span><img class="lf" src="images/door-l.jpg" alt=""><img class="rt" src="images/door-r.jpg" alt=""></span>
     <span class="lbl"><b>ACT</b><span>Appalachian Conservation Tool</span><i>Visualize, analyze, export</i></span></a>
@@ -353,6 +385,10 @@ map.ready(() => {
   RAMP.forEach((c, i) => { const n = 64, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'), r = n / 2 - 1;
     x.beginPath(); for (let k = 0; k < 6; k++){ const a = Math.PI / 3 * k; x.lineTo(n / 2 + r * Math.cos(a), n / 2 + r * Math.sin(a)); } x.closePath(); x.fillStyle = c; x.fill();
     if (!map.ml.hasImage('slfhex-' + i)) map.ml.addImage('slfhex-' + i, x.getImageData(0, 0, n, n), {pixelRatio:2}); });
+  /* the ACT cell under a tapped hexagon, outlined (made before the records so it lies under them) */
+  const cellHi = new G.Overlay(map, 'slfcell', 'feat', [
+    {type:'fill', paint:{'fill-color':'#FFE08A', 'fill-opacity':.16}},
+    {type:'line', paint:{'line-color':'#FFE08A', 'line-width':2.2, 'line-opacity':.95}}]);
   const recs = new G.Overlay(map, 'slf', 'feat', [
     {type:'circle', paint:{'circle-radius':['interpolate', ['linear'], ['zoom'], 9, 5, 14, 12, 17, 11], 'circle-color':'#FFE08A',
       'circle-opacity':['case', ['boolean', ['feature-state', 'now'], false], .35, 0], 'circle-blur':.9, 'circle-pitch-alignment':'map'}},
@@ -392,6 +428,58 @@ map.ready(() => {
     hooks.push(on => { clearTimeout(timer); pb.classList.toggle('on', on); pb.setAttribute('aria-label', on ? 'Pause' : 'Play the years');
       if (on){ if (cur === years.length - 1) cur = 0; step(); } else show(cur, false); });
     show(cur, false);
+    /* tap a hexagon: the square-mile ACT cell it falls in lights up, and a card gives that cell's lanternfly records by year,
+       when they were first recorded there, the observation tapped (its photo comes from iNaturalist when tapped) and a link
+       that opens the same cell in ACT. ACT's cells come from its grid file, loaded on the first tap only. */
+    let grid = null, pop = null, tok = 0;
+    const NARROW = matchMedia('(max-width:899px)'), box = $('cellcard');
+    const getGrid = () => grid || (grid = fetch(SRC + 'data/grid.json').then(r => r.json()).then(g => { const h = g.levels.hex, out = [];
+      h.id.forEach((id, c) => { const [la, lo] = h.c[c]; if (lo < BOX[0] - .05 || lo > BOX[2] + .05 || la < BOX[1] - .05 || la > BOX[3] + .05) return;
+        const q = h.g[c]; let a = q[0], o = q[1]; const ring = [[o / 1e5, a / 1e5]];
+        for (let i = 2; i < q.length; i += 2){ a += q[i]; o += q[i + 1]; ring.push([o / 1e5, a / 1e5]); } ring.push(ring[0]);
+        out.push({id, mi:h.mi[c], ring}); }); return out; }).catch(() => { grid = null; return []; }));
+    const inRing = (x, y, r) => { let s = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++){ const [xi, yi] = r[i], [xj, yj] = r[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) s = !s; } return s; };
+    const day = p => new Date(Date.UTC(p[1], 0, p[0])).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', timeZone:'UTC'});
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'})[c]);
+    const shut = () => { tok++; if (pop){ const q = pop; pop = null; q.remove(); }
+      box.hidden = true; box.querySelector('.cc-b').innerHTML = ''; document.body.classList.remove('cellopen'); cellHi.set({type:'FeatureCollection', features:[]}); };
+    box.querySelector('.cc-x').addEventListener('click', shut);
+    const open = async (k, ll) => { const p = pts[k];
+      shut(); const me = ++tok; let setH, root;
+      if (NARROW.matches){   /* phones: the card takes the place of the door and year cards, so nothing covers it */
+        box.hidden = false; document.body.classList.add('cellopen'); setH = h => { box.querySelector('.cc-b').innerHTML = h; }; root = () => box; }
+      else { pop = new maplibregl.Popup({className:'slfpop', maxWidth:'300px', offset:12, focusAfterOpen:false}).setLngLat(ll).addTo(map.ml);
+        const mine = pop; mine.on('close', () => { if (pop === mine){ pop = null; tok++; cellHi.set({type:'FeatureCollection', features:[]}); } });
+        setH = h => { if (pop === mine) mine.setHTML(h); }; root = () => pop === mine ? mine.getElement() : null; }
+      setH('<div class="sp-wait">Finding its cell…</div>');
+      const cells = await getGrid(); if (tok !== me) return;
+      const cell = cells.find(c => inRing(p[4], p[3], c.ring));
+      let html = '';
+      if (cell){ cellHi.set({type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'Polygon', coordinates:[cell.ring]}}]});
+        const inC = pts.filter(q => inRing(q[4], q[3], cell.ring)), by = years.map(y => inC.filter(q => q[1] === y).length), mx = Math.max(1, ...by);
+        const first = inC.reduce((a, q) => !a || q[1] < a[1] || (q[1] === a[1] && q[0] < a[0]) ? q : a, null);
+        html += '<div class="sp-h">1 sq mi cell · A.T. mile ' + Math.round(cell.mi).toLocaleString() + '</div>'
+          + '<div class="sp-n"><b>' + inC.length + '</b> lanternfly record' + (inC.length === 1 ? '' : 's') + ' in this cell</div>'
+          + '<div class="sp-ch" role="img" aria-label="Records by year: ' + years.map((y, i) => y + ' ' + by[i]).join(', ') + '">'
+          + years.map((y, i) => '<div><span class="sp-v">' + (by[i] || '') + '</span><i style="height:' + Math.max(by[i] ? 8 : 2, by[i] / mx * 100) + '%;background:' + (by[i] ? col(y) : 'rgba(255,255,255,.18)') + '"></i><span>' + String(y).slice(2) + '</span></div>').join('') + '</div>'
+          + '<div class="sp-f">First recorded here ' + day(first) + '</div>';
+      } else html += '<div class="sp-h">Outside ACT’s cells along the trail</div>';
+      html += '<div class="sp-o"><div class="sp-img"></div><div><div class="sp-d">Seen ' + day(p) + '</div>'
+        + '<a href="https://www.inaturalist.org/observations/' + p[5] + '" target="_blank" rel="noopener">View on iNaturalist</a><div class="sp-c"></div></div></div>';
+      if (cell) html += '<a class="sp-act" href="https://act.atconservation.com/#q=pest&sp=lycorma-delicatula&size=hex&cell=' + encodeURIComponent(cell.id) + '">Open this cell in ACT<svg viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5l6 5.5-6 5.5"/></svg></a>';
+      setH(html);
+      fetch('https://api.inaturalist.org/v1/observations/' + p[5]).then(r => r.json()).then(j => { if (tok !== me) return; const o = (j.results || [])[0], ph = o && o.photos && o.photos[0];
+        const el = root(); if (!ph || !el) return;
+        el.querySelector('.sp-img').innerHTML = '<img src="' + esc(ph.url.replace('/square.', '/small.')) + '" alt="Spotted lanternfly photographed ' + esc(day(p)) + '">';
+        el.querySelector('.sp-c').textContent = ph.attribution || ''; }).catch(() => {}); };
+    map.ml.on('click', e => { const {x, y} = e.point, hit = map.ml.queryRenderedFeatures([[x - 12, y - 12], [x + 12, y + 12]], {layers:[recs.ids[1]]})
+        .filter(f => st[f.id] && st[f.id].on);
+      if (!hit.length) return shut();
+      let best = hit[0], bd = Infinity; hit.forEach(f => { const s = map.ml.project(f.geometry.coordinates), d = (s.x - x) ** 2 + (s.y - y) ** 2; if (d < bd){ bd = d; best = f; } });
+      open(best.id, best.geometry.coordinates); });
+    map.ml.on('mousemove', e => { const {x, y} = e.point;
+      map.ml.getCanvas().style.cursor = map.ml.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {layers:[recs.ids[1]]}).some(f => st[f.id] && st[f.id].on) ? 'pointer' : ''; });
   }).catch(() => { $('what').textContent = 'Spotted lanternfly along the Appalachian Trail in Harpers Ferry, WV'; });
   /* the camera sways gently, 7 degrees either way over 50 s, around the direction it faces, so the chosen view stays.
      Touching, clicking or scrolling the map pauses it for 9 s; it then sways around wherever the person left it.
