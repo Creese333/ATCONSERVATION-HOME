@@ -508,7 +508,7 @@ map.ready(() => {
      also cancels the pinch or scroll the person is starting, so the map would never zoom.) */
   /* computers have a control for it (#spin): play or pause, and a speed: 0 is this sway, 1 to 4 a full steady turn at
      2, 4, 7 and 12 degrees a second. Reduce Motion starts it paused; the play button still starts it. */
-  let spin = false, idle = 0, lastT = 0, ph = 0, base = VIEW.bearing, rot = !STILL, spd = 0;
+  let spin = false, lastT = 0, ph = 0, base = VIEW.bearing, rot = !STILL, spd = 0;
   const DEG = [0, 2, 4, 7, 12];
   const turn = now => { requestAnimationFrame(turn); const dt = lastT ? Math.min(.1, (now - lastT) / 1000) : 0; lastT = now;
     if (!rot || !spin || !dt || map.ml.isMoving()) return;
@@ -520,8 +520,15 @@ map.ready(() => {
   setRot(rot);
   sp.addEventListener('click', () => setRot(!rot));
   ss.addEventListener('input', () => { spd = +ss.value; restart(); if (!rot) setRot(true); });
-  const hold = e => { if (e && e.target && e.target.closest && e.target.closest('#spin')) return; spin = false; clearTimeout(idle); idle = setTimeout(() => { restart(); spin = true; }, 9000); };
-  ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true, capture:true}));
+  /* while a finger or button is down on the map, or the map is still moving from a drag or scroll, the turn waits; it
+     carries on the moment the map comes to rest, from wherever the person left it */
+  let down = 0;
+  const press = () => { down++; spin = false; }, lift = () => { down = Math.max(0, down - 1); if (!down){ restart(); spin = true; } };
+  const box_ = map.getContainer();
+  box_.addEventListener('mousedown', press, {passive:true, capture:true}); addEventListener('mouseup', () => { if (down) lift(); }, {passive:true});
+  box_.addEventListener('touchstart', e => { down = e.touches.length; spin = false; }, {passive:true, capture:true});
+  box_.addEventListener('touchend', e => { down = e.touches.length; if (!down){ restart(); spin = true; } }, {passive:true, capture:true});
+  box_.addEventListener('touchcancel', () => { down = 0; restart(); spin = true; }, {passive:true, capture:true});
   setTimeout(() => { spin = true; requestAnimationFrame(turn); }, 1200);
 });
 })();
