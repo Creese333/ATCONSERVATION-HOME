@@ -46,7 +46,7 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);overflow:hidden;
 #map{position:fixed;inset:0}
 .maplibregl-ctrl-top-left{display:none}
 /* the map credits sit small at the top right, out of the card's way */
-.maplibregl-ctrl-bottom-right{top:calc(env(safe-area-inset-top) + 40px);bottom:auto;right:6px;max-width:48vw}
+.maplibregl-ctrl-bottom-right{top:calc(env(safe-area-inset-top) + 48px);bottom:auto;right:6px;max-width:48vw}
 .maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib{font-size:8px;line-height:1.3;background:transparent;color:var(--faint);margin:0;text-align:right;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .maplibregl-ctrl-attrib a{color:var(--sub)}
 /* the dark edges keep the words readable over the imagery */
@@ -61,10 +61,20 @@ h1 .at{color:var(--phen)}
   border:1px solid var(--edge);box-shadow:0 24px 60px rgba(0,0,0,.35)}
 /* the basemap switch: imagery or OpenStreetMap */
 #bases{pointer-events:auto;display:flex;padding:2px;border-radius:999px;flex:none;position:absolute;right:10px;top:calc(env(safe-area-inset-top) + 10px)}
-#bases button{border:0;background:none;color:var(--sub);font:inherit;font-size:10px;font-weight:600;letter-spacing:-.01em;
-  padding:4px 8px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
+#bases button{border:0;background:none;color:var(--sub);font:inherit;font-size:12.5px;font-weight:600;letter-spacing:-.01em;
+  padding:6px 11px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
 #bases button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:#1D1D1F}
 #bases button:focus-visible{outline:2px solid #0A84FF;outline-offset:1px}
+#spin{display:none;pointer-events:auto;position:absolute;right:40px;top:calc(22px + clamp(42px,2.9vw,52px) + 12px);flex-direction:column;align-items:center;gap:10px;padding:10px 0 14px;width:52px;border-radius:26px}
+#spinplay{width:36px;height:36px;border-radius:50%;border:0;padding:0;background:#2E9E4F;color:#fff;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+#spinplay svg{width:12px;height:13px;display:block}
+#spinplay .pl{margin-left:2px}
+#spinplay .ps,#spinplay.on .pl{display:none}
+#spinplay.on .ps{display:block}
+@media (hover:hover){#spinplay:hover{background:#38B85D}}
+#spinplay:focus-visible,#spinspd:focus-visible{outline:2px solid #0A84FF;outline-offset:2px}
+#spinspd{writing-mode:vertical-lr;direction:ltr;width:20px;height:130px;margin:0;accent-color:#F5F5F7;cursor:pointer}
+#spin .sl{font-size:10px;color:var(--sub);line-height:1}
 #camread{position:fixed;z-index:50;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 2px);background:rgba(0,0,0,.82);color:#FFE08A;font:600 11px/1.3 ui-monospace,Menlo,monospace;padding:3px 7px;border-radius:6px;pointer-events:none;white-space:nowrap}
 #panel{position:fixed;left:0;right:0;bottom:0;padding:0 12px calc(env(safe-area-inset-bottom) + 12px);
   display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
@@ -160,6 +170,11 @@ body.leaving #veil{opacity:1}
    data card, all growing with the screen */
 @media (min-width:900px){
   header{padding:22px 40px 0}
+  #bases{right:40px;top:22px;padding:3px}
+  #bases button{font-size:clamp(15px,1vw,19px);padding:clamp(8px,.55vw,11px) clamp(16px,1.1vw,22px)}
+  .maplibregl-ctrl-bottom-right{top:auto;bottom:6px;right:10px}
+  /* the camera's turn: play or pause, and a slider down from slow (the gentle sway) to fast (a full, steady turn) */
+  #spin{display:flex}
   #go{max-width:none;margin:0 0 12px}
   #act{width:100%;max-width:none}
   #act{gap:clamp(18px,1.3vw,26px);padding:clamp(12px,.8vw,16px) clamp(22px,1.6vw,32px) clamp(12px,.8vw,16px) clamp(12px,.8vw,16px);border-radius:26px}
@@ -262,6 +277,12 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
         <ellipse cx="126" cy="88" rx="4" ry="6" fill="#fff" opacity=".18"/>
       </svg>
   </figure>
+  </div>
+  <div id="spin" class="glass rise" style="--d:.2s" role="group" aria-label="Turn the map">
+    <button id="spinplay" class="on" type="button" aria-label="Pause the turn"><svg class="pl" viewBox="0 0 9 10" aria-hidden="true"><path d="M1 .6v8.8L8.4 5z" fill="currentColor"/></svg><svg class="ps" viewBox="0 0 9 10" aria-hidden="true"><path d="M1 .6h2.3v8.8H1zM5.7 .6H8v8.8H5.7z" fill="currentColor"/></svg></button>
+    <span class="sl" aria-hidden="true">Slow</span>
+    <input id="spinspd" type="range" min="0" max="4" step="1" value="0" aria-label="Turn speed, slow to fast">
+    <span class="sl" aria-hidden="true">Fast</span>
   </div>
   <div id="bases" class="glass rise" style="--d:.15s" role="group" aria-label="Basemap"><button type="button" data-b="img" aria-pressed="false">Imagery</button><button type="button" data-b="osm" aria-pressed="true">OpenStreetMap</button></div>
 </header>
@@ -485,10 +506,21 @@ map.ready(() => {
      Touching, clicking or scrolling the map pauses it for 9 s; it then sways around wherever the person left it.
      (Turned a little each frame, not with rotateTo and map.stop(): stopping an animation in a touch or wheel listener
      also cancels the pinch or scroll the person is starting, so the map would never zoom.) */
-  let spin = false, idle = 0, lastT = 0, ph = 0, base = VIEW.bearing;
+  /* computers have a control for it (#spin): play or pause, and a speed: 0 is this sway, 1 to 4 a full steady turn at
+     2, 4, 7 and 12 degrees a second. Reduce Motion starts it paused; the play button still starts it. */
+  let spin = false, idle = 0, lastT = 0, ph = 0, base = VIEW.bearing, rot = !STILL, spd = 0;
+  const DEG = [0, 2, 4, 7, 12];
   const turn = now => { requestAnimationFrame(turn); const dt = lastT ? Math.min(.1, (now - lastT) / 1000) : 0; lastT = now;
-    if (STILL || !spin || !dt || map.ml.isMoving()) return; ph += dt; map.ml.setBearing(base + 7 * Math.sin(2 * Math.PI * ph / 50)); };
-  const hold = () => { spin = false; clearTimeout(idle); idle = setTimeout(() => { base = map.ml.getBearing(); ph = 0; spin = true; }, 9000); };
+    if (!rot || !spin || !dt || map.ml.isMoving()) return;
+    if (spd){ map.ml.setBearing(map.ml.getBearing() + DEG[spd] * dt); return; }
+    ph += dt; map.ml.setBearing(base + 7 * Math.sin(2 * Math.PI * ph / 50)); };
+  const restart = () => { base = map.ml.getBearing(); ph = 0; };
+  const sp = $('spinplay'), ss = $('spinspd');
+  const setRot = on => { rot = on; if (on) restart(); sp.classList.toggle('on', on); sp.setAttribute('aria-label', on ? 'Pause the turn' : 'Turn the map'); };
+  setRot(rot);
+  sp.addEventListener('click', () => setRot(!rot));
+  ss.addEventListener('input', () => { spd = +ss.value; restart(); if (!rot) setRot(true); });
+  const hold = e => { if (e && e.target && e.target.closest && e.target.closest('#spin')) return; spin = false; clearTimeout(idle); idle = setTimeout(() => { restart(); spin = true; }, 9000); };
   ['mousedown', 'touchstart', 'wheel'].forEach(t => map.getContainer().addEventListener(t, hold, {passive:true, capture:true}));
   setTimeout(() => { spin = true; requestAnimationFrame(turn); }, 1200);
 });
