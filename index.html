@@ -424,7 +424,7 @@ map.ready(() => {
   /* the basemap switch; the trail is white over imagery and dark green over the light street map */
   const TRAILC = {img:['#FFFFFF', .18], osm:['#14532D', .25]};
   const setBase = k => { map.setBase(k); document.querySelectorAll('#bases button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.b === k)));
-    const [c, o] = TRAILC[k] || TRAILC.img; trail.ids.forEach((id, i) => { map.ml.setPaintProperty(id, 'line-color', c); if (!i) map.ml.setPaintProperty(id, 'line-opacity', o); }); };
+    const [c, o] = TRAILC[k] || TRAILC.img; trail.ids.forEach((id, i) => { map.ml.setPaintProperty(id, 'line-color', c); if (!i) map.ml.setPaintProperty(id, 'line-opacity', o); }); document.dispatchEvent(new Event('basechange')); };
   document.querySelectorAll('#bases button').forEach(b => b.addEventListener('click', () => setBase(b.dataset.b)));
   setBase('osm');
   fetch(SVC + 'ANST_Centerline/FeatureServer/0/query?' + q).then(r => r.ok ? r.json() : null).then(j => { if (j && j.features) trail.set(j); }).catch(() => {});
@@ -468,12 +468,17 @@ map.ready(() => {
   /* how each set draws: the lanternfly's year colours with a faint glow under the year playing; lightning bugs all glowing */
   const look = k => { const L = map.ml, g = recs.ids[0], s = recs.ids[1], f = k === 'ffly';
     L.setLayoutProperty(s, 'icon-image', ['concat', KINDS[k].hex, ['get', 'i']]);
-    L.setPaintProperty(g, 'circle-color', f ? GLOW : '#FFE08A');
-    L.setPaintProperty(g, 'circle-radius', f ? ['interpolate', ['linear'], ['zoom'], 9, 7, 14, ['case', ['boolean', ['feature-state', 'now'], false], 22, 15], 17, 16]
+    /* lightning bugs over the light OpenStreetMap basemap: a soft dark halo, a bit of dusk around each light, so the pale glow
+       stands out; over imagery the halo glows gold */
+    const light = (document.querySelector('#bases [aria-pressed="true"]') || {dataset:{}}).dataset.b !== 'img', dusk = f && light;
+    L.setPaintProperty(g, 'circle-color', dusk ? '#1E1A0C' : f ? GLOW : '#FFE08A');
+    L.setPaintProperty(g, 'circle-radius', dusk ? ['interpolate', ['linear'], ['zoom'], 9, 10, 14, ['case', ['boolean', ['feature-state', 'now'], false], 28, 22], 17, 22]
+      : f ? ['interpolate', ['linear'], ['zoom'], 9, 7, 14, ['case', ['boolean', ['feature-state', 'now'], false], 22, 15], 17, 16]
       : ['interpolate', ['linear'], ['zoom'], 9, 5, 14, 12, 17, 11]);
-    L.setPaintProperty(g, 'circle-opacity', f ? ['case', ['boolean', ['feature-state', 'now'], false], .6, ['boolean', ['feature-state', 'on'], false], .32, 0]
+    L.setPaintProperty(g, 'circle-opacity', dusk ? ['case', ['boolean', ['feature-state', 'now'], false], .72, ['boolean', ['feature-state', 'on'], false], .6, 0]
+      : f ? ['case', ['boolean', ['feature-state', 'now'], false], .6, ['boolean', ['feature-state', 'on'], false], .32, 0]
       : ['case', ['boolean', ['feature-state', 'now'], false], .35, 0]);
-    L.setPaintProperty(g, 'circle-blur', f ? 1 : .9);
+    L.setPaintProperty(g, 'circle-blur', dusk ? .85 : f ? 1 : .9);
     cellHi.ids.forEach((id, j) => L.setPaintProperty(id, j ? 'line-color' : 'fill-color', KINDS[k].hi)); };
   /* the set on show: its records, years, colours, the state of each hexagon, the timeline and where play is */
   const R = {k:'slf', pts:[], years:[], col:() => '', st:[], segs:[], cur:0, timer:0, taxa:[]}, cache = {};
@@ -570,6 +575,7 @@ map.ready(() => {
     map.ml.getCanvas().style.cursor = map.ml.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {layers:[recs.ids[1]]}).some(f => R.st[f.id] && R.st[f.id].on) ? 'pointer' : ''; });
   /* the switch; #fireflies in the address opens on the lightning bugs */
   document.querySelectorAll('#kind button').forEach(b => b.addEventListener('click', () => { if (b.dataset.k !== R.k) use(b.dataset.k); }));
+  document.addEventListener('basechange', () => look(R.k));
   use(/firefl|lightning/i.test(location.hash) ? 'ffly' : 'slf');
   /* the camera sways gently, 7 degrees either way over 50 s, around the direction it faces, so the chosen view stays.
      Touching, clicking or scrolling the map pauses it for 9 s; it then sways around wherever the person left it.
