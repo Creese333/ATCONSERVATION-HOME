@@ -125,8 +125,8 @@ h1 .at{color:var(--phen)}
 body.leaving #veil{opacity:1}
 #act:focus-visible{outline:3px solid #0A84FF;outline-offset:3px}
 #credit{margin:6px 0 0 4px;font-size:8px;line-height:1.35;color:var(--faint);text-align:left;max-width:350px}
-/* computers: at the bottom left, the lanternfly centered on top, then the door into ACT, then a larger data card, all
-   growing with the screen (the script moves the lanternfly to this place) */
+/* computers: the lanternfly larger at the top left, as on phones; at the bottom left the door into ACT, then a larger
+   data card, all growing with the screen */
 @media (min-width:900px){
   header{padding:22px 40px 0}
   #go{max-width:none;margin:0 0 12px}
@@ -138,7 +138,7 @@ body.leaving #veil{opacity:1}
   .lbl span{font-size:clamp(18px,1.25vw,25px)}
   .lbl i{font-size:clamp(17px,1.15vw,23px)}
   #panel{left:40px;right:auto;width:clamp(470px,32vw,660px);align-items:center;padding:0 0 calc(env(safe-area-inset-bottom) + 34px)}
-  #bug{width:clamp(200px,13vw,280px);margin:0 0 -6px}
+  #bug{width:clamp(300px,21vw,440px);margin:0 0 0 -8px}
   #card{max-width:none;border-radius:26px;padding:clamp(20px,1.4vw,28px) clamp(20px,1.5vw,30px) clamp(16px,1.1vw,22px)}
   #year{font-size:clamp(40px,2.7vw,58px)}
   #count{font-size:clamp(13px,.85vw,17px)}
@@ -320,7 +320,7 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
 /* on a computer the lanternfly sits centered over the data card and the ACT link at the top left; on a phone the
    lanternfly is at the top left and the link above the card */
 { const DESK = matchMedia('(min-width:900px)'), bug = $('bug'), go = $('go'), card = $('card'), panel = $('panel'), brand = $('brand'), head = document.querySelector('header');
-  const lay = () => { if (DESK.matches){ panel.insertBefore(bug, go); panel.insertBefore(go, card); }
+  const lay = () => { if (DESK.matches){ brand.appendChild(bug); panel.insertBefore(go, card); }
     else { brand.appendChild(bug); panel.insertBefore(go, card); } };
   lay(); DESK.addEventListener ? DESK.addEventListener('change', lay) : DESK.addListener(lay); }
 const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:18, base:'osm'});   /* 18: down to single buildings and the footbridge */
