@@ -311,7 +311,10 @@ const SVC = 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/
 const BOX = [-77.85, 39.15, -77.45, 39.55];
 /* the opening view: Harpers Ferry from the southwest, the footbridge and the towpath toward Sandy Hook ahead, the Shenandoah
    to the right (matched to Casey's phone screenshot, Nov 2026; MapLibre zoom) */
-const VIEW = {center:[-77.7328, 39.3231], zoom:14.1, pitch:57, bearing:63};
+/* computers: the view set on a desktop with ?cam (Harpers Ferry and the confluence, looking north-west up the Potomac);
+   phones keep their own */
+const VIEW = matchMedia('(min-width:900px)').matches ? {center:[-77.7455, 39.3214], zoom:14.32, pitch:55, bearing:319}
+  : {center:[-77.7328, 39.3231], zoom:14.1, pitch:57, bearing:63};
 /* with Reduce Motion on, the camera holds still (the years still play); zooming still sets the wings fluttering */
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
