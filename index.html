@@ -97,6 +97,9 @@ body[data-bug="ffly"] #slf3d,body[data-bug="ffly"] #slfdraw{display:none}
    whole rear of the body that spills out around its edges onto the map (the photo sits on top of it) */
 #ff .lamp,#ff .halo{position:absolute;border-radius:50%;pointer-events:none;opacity:0;left:80%;top:79%;transform:translate(-50%,-50%) rotate(52deg);z-index:0}
 #ff img{z-index:1}
+#ff img.p{display:none}
+#ff canvas{position:absolute;left:-30%;top:-30%;width:160%;height:160%;z-index:2;pointer-events:none;filter:drop-shadow(0 10px 8px rgba(0,0,0,.38))}
+#ff.on > img:not(.p){visibility:hidden}
 #ff .lamp{width:84%;height:44%;background:radial-gradient(closest-side,#FFFFE6 0%,#FFFB8A 38%,rgba(250,214,60,.92) 62%,rgba(243,198,42,0) 100%);animation:fflash 5.6s ease-in infinite}
 #ff .halo{width:165%;height:105%;background:radial-gradient(closest-side,rgba(253,250,120,.95),rgba(246,206,48,.62) 35%,rgba(243,198,42,.25) 62%,rgba(243,198,42,0) 100%);animation:fflash 5.6s ease-in infinite}
 @keyframes fflash{0%,62%{opacity:0}70%{opacity:.35}78%{opacity:1}86%{opacity:.85}95%,100%{opacity:0}}
@@ -244,7 +247,11 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
   <figure id="bug" class="rise" style="--d:.3s">
     <!-- the lightning bug, shown when the switch picks lightning bugs: cut from the photo (images/firefly.webp); its lantern
          flashes the way a common eastern firefly's does, a slow rising flash every few seconds, quickly while the map zooms -->
-    <div id="ff" role="img" aria-label="A lightning bug, its lantern glowing"><span class="halo"></span><span class="lamp"></span><img src="images/firefly.webp" alt=""></div>
+    <!-- the lightning bug: cut from the photo into a body and its two wing covers (images/ff-*.webp), drawn on the canvas.
+         At rest it matches the photo; while the map zooms the wing covers swing open into a V and the hind wings beat
+         between them. The whole photo stays underneath until the pieces load (and if they fail). -->
+    <div id="ff" role="img" aria-label="A lightning bug, its lantern glowing"><span class="halo"></span><span class="lamp"></span><img src="images/firefly.webp" alt=""><canvas></canvas>
+      <img class="p b" src="images/ff-body.webp" alt=""><img class="p ef" src="images/ff-ef.webp" alt=""><img class="p en" src="images/ff-en.webp" alt=""></div>
     <!-- the lanternfly in 3D: cut from the photo into a body and two wing pairs (images/slf-*.webp), the wings hinged at
          the thorax. Drawn on the canvas each frame with the 3D worked out in the script (no CSS 3D, which Safari draws
          differently); it sits still, and flutters (and lifts a little) only while the map is zooming. -->
@@ -405,6 +412,59 @@ const setPlay = on => { playing = on; hooks.forEach(f => f(on)); };
   requestAnimationFrame(frame);
 })();
 
+/* the lightning bug, drawn frame by frame like the lanternfly. The pieces (747 x 400) are the photo turned 58 degrees so
+   the body lies level, head to the left; the canvas turns them back. While the map zooms, energy e rises: the wing covers
+   swing apart about their bases into a V, and two hind wings (drawn here, thin and smoky) beat 11 times a second between them. */
+(function ffly(){
+  const box = document.getElementById('ff'); if (!box) return;
+  const cv = box.querySelector('canvas'), ctx = cv.getContext('2d'), im = k => box.querySelector('img.' + k);
+  const BD = im('b'), EF = im('ef'), EN = im('en');
+  const CW = 429 * 1.6, CH = 600 * 1.6, OX = 429 * .3, OY = 600 * .3, R = Math.PI / 180, P = Math.PI * 2;
+  const ready = () => [BD, EF, EN].every(i => i.complete && i.naturalWidth);
+  let t = 0, last = 0, e = 0, kick = -1e9, drawn = false, pend = false, sc = 1;
+  window.ffBuzz = () => { kick = performance.now(); pend = true; };
+  const size = () => { const r = window.devicePixelRatio || 1, w = Math.round(cv.clientWidth * r), h = Math.round(cv.clientHeight * r);
+    if (w && (cv.width !== w || cv.height !== h)){ cv.width = w; cv.height = h; drawn = false; } sc = cv.width / CW; };
+  /* a hind wing: a long smoky membrane from its base, angle a from straight back, with a few darker veins */
+  const hind = (a, len, wid, k) => {
+    ctx.save(); ctx.translate(372, 128); ctx.rotate(a); ctx.scale(1, k);
+    const g = ctx.createLinearGradient(0, 0, len, 0);
+    g.addColorStop(0, 'rgba(70,62,52,.7)'); g.addColorStop(.35, 'rgba(176,170,158,.58)'); g.addColorStop(1, 'rgba(215,210,200,.34)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(len * .3, -wid * 1.1, len * .9, -wid * .9, len, -wid * .1);
+    ctx.bezierCurveTo(len * .95, wid * .5, len * .4, wid * .55, 0, 0); ctx.fill();
+    ctx.strokeStyle = 'rgba(60,52,44,.35)'; ctx.lineWidth = 1.6;
+    for (const v of [-.55, -.2, .15]){ ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(len * .45, wid * v * 1.2, len * .85, wid * v); ctx.stroke(); }
+    ctx.restore(); };
+  const frame = now => {
+    requestAnimationFrame(frame);
+    if (!ready()) return;
+    if (!box.classList.contains('on')) box.classList.add('on');
+    const dt = last ? Math.min(.1, (now - last) / 1000) : 0; last = now;
+    const want = pend || performance.now() - kick < 250 ? 1 : 0, e0 = e; pend = false;
+    e += (want - e) * (1 - Math.exp(-Math.max(dt, .016) / (want ? .07 : .35))); if (!want && e < .004) e = 0;
+    size();
+    if (drawn && e === 0 && e0 === 0) return;
+    drawn = true; t += dt;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    /* into the photo's frame (429 x 600), lifted a little as it flies, then turned so the level pieces lie as in the photo */
+    const lift = 10 * e, sway = 2.5 * e * Math.sin(P * t * 1.6) * R;
+    ctx.setTransform(sc, 0, 0, sc, 0, 0); ctx.translate(OX + 214.5, OY + 300 - lift); ctx.rotate(58 * R + sway); ctx.translate(-376.5, -161);
+    ctx.drawImage(BD, 0, 0);
+    const beat = Math.sin(P * 11 * t), s = e * (40 + 6 * Math.sin(P * 3 * t));
+    if (e > .02){
+      hind(-(s * .55 + 8 + 26 * beat) * e * R, 330, 62, .55 + .45 * Math.abs(Math.cos(P * 11 * t)));
+      hind((s * .45 + 6 + 26 * beat) * e * R, 340, 70, .55 + .45 * Math.abs(Math.cos(P * 11 * t)));
+    }
+    /* the wing covers: the far one swings up about its base, the near one down; both shorten a little as they lift */
+    const cover = (img, px, py, a) => { ctx.save(); ctx.translate(px, py); ctx.rotate(a); ctx.scale(1 - .12 * e, 1); ctx.translate(-px, -py); ctx.drawImage(img, 0, 0); ctx.restore(); };
+    cover(EF, 352, 108, -s * R);
+    cover(EN, 362, 150, s * .8 * R);
+  };
+  requestAnimationFrame(frame);
+})();
+
 /* on a computer the lanternfly sits centered over the data card and the ACT link at the top left; on a phone the
    lanternfly is at the top left and the link above the card */
 { const DESK = matchMedia('(min-width:900px)'), bug = $('bug'), go = $('go'), card = $('card'), panel = $('panel'), brand = $('brand'), head = document.querySelector('header');
@@ -415,9 +475,9 @@ const map = window.__MAP = new ATMap('map', {minZoom:9, maxZoom:18, base:'osm'})
 map.ready(() => {
   map.set3D(true, {animate:false});
   map.ml.jumpTo(VIEW);
-  /* zooming sets the lanternfly fluttering, or the lightning bug flashing quickly */
+  /* zooming sets the lanternfly fluttering, or the lightning bug flying with its underside lit */
   const ff = $('ff'); let ffT = 0;
-  map.ml.on('zoom', () => { if (document.body.dataset.bug === 'ffly'){ ff.classList.add('buzz'); clearTimeout(ffT); ffT = setTimeout(() => ff.classList.remove('buzz'), 900); }
+  map.ml.on('zoom', () => { if (document.body.dataset.bug === 'ffly'){ ff.classList.add('buzz'); if (window.ffBuzz) window.ffBuzz(); clearTimeout(ffT); ffT = setTimeout(() => ff.classList.remove('buzz'), 900); }
     else if (window.slfBuzz) window.slfBuzz(); });
   /* ?cam in the address: a readout of the camera (center, MapLibre zoom, tilt, direction), for setting the opening view from a screenshot */
   if (/[?&]cam\b/.test(location.search)){ const d = document.createElement('div'); d.id = 'camread'; document.body.appendChild(d);
