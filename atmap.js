@@ -91,6 +91,8 @@ const NAIPPLUS = '/USGSNAIPPlus/', NAIPPLAIN = '/USGSNAIPImagery/';
 /* a tile that never came, by source: retried later with refreshTiles */
 const MISSED = new Map(), MISSN = new Map();
 let offline = false;   /* set by ATMap.offline(): no signal, so nothing is asked of the network */
+const OSMH = /^https:\/\/tile\.openstreetmap\.org\//, OSMDE = 'https://tile.openstreetmap.de/';
+let osmBlocked = false;
 async function tileLoad(params, ac){
   const raw = params.url.slice('atq://'.length), hash = raw.indexOf('#'), url = 'https://' + (hash < 0 ? raw : raw.slice(0, hash)), tag = hash < 0 ? '' : raw.slice(hash + 1);
   const host = new URL(url).hostname, sig = ac.signal;
@@ -99,11 +101,16 @@ async function tileLoad(params, ac){
     if (n) await sleep(500 * n * (.7 + Math.random() * .6), sig);
     if (IDLEHOST[host]) await whenStill(sig);
     await slot(host, sig);
-    const u = n && url.includes(NAIPPLUS) ? url.replace(NAIPPLUS, NAIPPLAIN) : url;   /* a picture NAIP Plus could not draw is asked of plain NAIP */
+    let u = n && url.includes(NAIPPLUS) ? url.replace(NAIPPLUS, NAIPPLAIN) : url;   /* a picture NAIP Plus could not draw is asked of plain NAIP */
+    /* OpenStreetMap's own servers refuse tiles sent without the page's address (Referer), which some browsers and home-screen
+       apps leave off. Once they refuse, the same OpenStreetMap map comes from the German OpenStreetMap servers instead. */
+    if (OSMH.test(u) && osmBlocked) u = u.replace(OSMH, OSMDE);
     const ctl = new AbortController(), stop = () => ctl.abort(), t = setTimeout(stop, TILEWAIT);
     sig.addEventListener('abort', stop, {once:true});
     try {
-      const r = await fetch(n ? u + (u.includes('?') ? '&' : '?') + 'again=' + n : u, {signal:ctl.signal, mode:'cors', credentials:'omit'});
+      const osm = /tile\.openstreetmap\./.test(u);
+      const r = await fetch(n && !osm ? u + (u.includes('?') ? '&' : '?') + 'again=' + n : u,
+        {signal:ctl.signal, mode:'cors', credentials:'omit', referrer:location.href, referrerPolicy:'strict-origin-when-cross-origin'});
       if (r.status === 404 || r.status === 400){ last = new Error('HTTP ' + r.status); break; }   /* the service has no such tile: asking again will not change that */
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const ct = r.headers.get('content-type') || '';
@@ -111,7 +118,7 @@ async function tileLoad(params, ac){
       const data = await r.arrayBuffer();
       if (tag){ const [src, k] = splitTag(tag), m = MISSN.get(src); if (m) m.delete(k); }
       return {data, cacheControl:r.headers.get('cache-control'), expires:r.headers.get('expires')};
-    } catch (e){ if (sig.aborted) throw e; last = e; }
+    } catch (e){ if (sig.aborted) throw e; last = e; if (OSMH.test(u) && !ctl.signal.aborted) osmBlocked = true; }   /* refused (403, which also arrives as a network error when it carries no CORS header) */
     finally { clearTimeout(t); sig.removeEventListener('abort', stop); free(host); }
   }
   if (tag && !offline && !(last && /HTTP 40[04]/.test(last.message))){ const [src, k] = splitTag(tag);
