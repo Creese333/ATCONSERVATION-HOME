@@ -92,14 +92,18 @@ body[data-bug="ffly"] #kind button[aria-pressed="true"]{background:#FDF3A6}
 #ff{display:none;position:relative;width:62%;aspect-ratio:429/600;margin-left:6%;animation:ffbob 5.6s ease-in-out infinite;transform-origin:50% 60%}
 body[data-bug="ffly"] #ff{display:block}
 body[data-bug="ffly"] #slf3d,body[data-bug="ffly"] #slfdraw{display:none}
-#ff img{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 16px 12px rgba(0,0,0,.55))}
-#ff .lamp,#ff .halo{position:absolute;border-radius:50%;pointer-events:none;opacity:0;left:86%;top:89%;transform:translate(-50%,-50%) rotate(-36deg)}
-#ff .lamp{width:30%;height:17%;background:radial-gradient(closest-side,#FFFFE0 0%,#FDFC77 35%,rgba(243,198,42,.85) 62%,rgba(243,198,42,0) 100%);mix-blend-mode:screen;animation:fflash 5.6s ease-in infinite}
-#ff .halo{width:150%;height:110%;background:radial-gradient(closest-side,rgba(243,198,42,.55),rgba(243,198,42,.18) 45%,rgba(243,198,42,0) 75%);animation:fflash 5.6s ease-in infinite}
+#ff img{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 10px 8px rgba(0,0,0,.38))}
+/* the lantern is on the underside of the last abdomen segments, so its light comes from below: a soft yellow glow under the
+   whole rear of the body that spills out around its edges onto the map (the photo sits on top of it) */
+#ff .lamp,#ff .halo{position:absolute;border-radius:50%;pointer-events:none;opacity:0;left:80%;top:79%;transform:translate(-50%,-50%) rotate(52deg);z-index:0}
+#ff img{z-index:1}
+#ff .lamp{width:84%;height:44%;background:radial-gradient(closest-side,#FFFFE6 0%,#FFFB8A 38%,rgba(250,214,60,.92) 62%,rgba(243,198,42,0) 100%);animation:fflash 5.6s ease-in infinite}
+#ff .halo{width:165%;height:105%;background:radial-gradient(closest-side,rgba(253,250,120,.95),rgba(246,206,48,.62) 35%,rgba(243,198,42,.25) 62%,rgba(243,198,42,0) 100%);animation:fflash 5.6s ease-in infinite}
 @keyframes fflash{0%,62%{opacity:0}70%{opacity:.35}78%{opacity:1}86%{opacity:.85}95%,100%{opacity:0}}
 @keyframes ffbob{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(0,-4px) rotate(-1.5deg)}}
-#ff.buzz .lamp,#ff.buzz .halo{animation:fquick .42s ease-in-out infinite}
-@keyframes fquick{0%,100%{opacity:.15}50%{opacity:1}}
+/* zooming: the whole underside lights up and stays lit while the map moves */
+#ff.buzz .lamp,#ff.buzz .halo{animation:none;opacity:1;transition:opacity .25s ease-out}
+#ff.buzz .halo{transform:translate(-50%,-50%) rotate(52deg) scale(1.25)}
 @media (prefers-reduced-motion: reduce){#ff,#ff .lamp,#ff .halo{animation:none}#ff .lamp{opacity:.9}#ff .halo{opacity:.55}}
 #slf3d{position:relative;width:100%;aspect-ratio:650/500}
 #slf3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -240,7 +244,7 @@ function slfFail(){ if (window.slfGone) return; window.slfGone = true;
   <figure id="bug" class="rise" style="--d:.3s">
     <!-- the lightning bug, shown when the switch picks lightning bugs: cut from the photo (images/firefly.webp); its lantern
          flashes the way a common eastern firefly's does, a slow rising flash every few seconds, quickly while the map zooms -->
-    <div id="ff" role="img" aria-label="A lightning bug, its lantern glowing"><span class="halo"></span><img src="images/firefly.webp" alt=""><span class="lamp"></span></div>
+    <div id="ff" role="img" aria-label="A lightning bug, its lantern glowing"><span class="halo"></span><span class="lamp"></span><img src="images/firefly.webp" alt=""></div>
     <!-- the lanternfly in 3D: cut from the photo into a body and two wing pairs (images/slf-*.webp), the wings hinged at
          the thorax. Drawn on the canvas each frame with the 3D worked out in the script (no CSS 3D, which Safari draws
          differently); it sits still, and flutters (and lifts a little) only while the map is zooming. -->
